@@ -46,7 +46,7 @@ Update endp
 ; All procedures related to rendering the game will
 ; be called from here.
 Render proc
-	call DrawMap
+	;call DrawMap
 	call DrawPacMan
 	ret
 Render endp
@@ -158,7 +158,11 @@ CheckMapLoc proc
 
 		RemoveChar:
 			mov al, ' '
-			mov [edx], al
+			;mov [edx], al
+			mov dl, PrevX
+			mov dh, PrevY
+			call GotoXY
+			call WriteChar
 			jmp EndOfCheckMapLoc
 		
 	EndOfCheckMapLoc:
@@ -195,13 +199,13 @@ MoveBack endp
 
 ; We should probably change this soon
 ; We won't want the ugly refresh thing we have now.
-DrawMap proc USES edx
-	call ClrScr
-	mov	edx,OFFSET buffer	; display the buffer
-	call	WriteString
-	call	Crlf
-	ret
-DrawMap endp
+;DrawMap proc USES edx
+;	call ClrScr
+;	mov	edx,OFFSET buffer	; display the buffer
+;	call	WriteString
+;	call	Crlf
+;	ret
+;DrawMap endp
 
 ; Draw Pac Man
 DrawPacMan proc
@@ -262,13 +266,12 @@ ReadMapFile proc USES edx eax ecx
 		buf_size_ok:	
 			mov	buffer[eax],0		; insert null terminator
 			mWrite "File size: "
-			call	WriteDec			; display file size
-			call	Crlf
-
-			; Display the buffer.
-			mWrite <"Buffer:",0dh,0ah,0dh,0ah>
+			call WriteDec			; display file size
+			call Crlf
+			
+			mov edx, OFFSET buffer
 			call ClrScr
-			call	WriteString
+			call WriteString
 
 	close_file:
 		mov	eax,fileHandle
