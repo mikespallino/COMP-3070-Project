@@ -4,7 +4,7 @@ INCLUDE irvine32.inc
 INCLUDE macros.inc
 
 BUFFER_SIZE = 750
-MAX_COORD = 22
+MAX_COORD = 23
 MAP_WIDTH = 25
 
 .data
@@ -107,6 +107,7 @@ CheckMapLoc proc
 	mov edx, OFFSET buffer
 	cmp PacManX, MAX_COORD
 	jg DecX
+	je WrapPosBack
 	cmp PacManY, MAX_COORD
 	jg DecY
 	jmp CheckZero
@@ -116,17 +117,27 @@ CheckMapLoc proc
 		sub PacManX, 1
 		jmp EndOfCheckMapLoc
 
+	WrapPosBack:
+		mov PacManX, 0
+		jmp RemoveChar
+
 	; We've moved too far forward in the Y
 	DecY:
 		sub PacManY, 1
 		jmp EndOfCheckMapLoc
 
 	CheckZero:
+		cmp PacManX, -1
+		je WrapPosForward
 		cmp PacManX, 0
 		jl IncX
 		cmp PacManY, 0
 		jl IncY
 		jmp GetCoordChar
+
+	WrapPosForward:
+		mov PacManX, 22
+		jmp RemoveChar
 
 	; We've moved to far back in the Y
 	IncX:
