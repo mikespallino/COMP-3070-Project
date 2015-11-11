@@ -3,7 +3,7 @@ TITLE PacMan, Authors: Mike Spallino
 INCLUDE irvine32.inc
 INCLUDE macros.inc
 
-BUFFER_SIZE = 750
+BUFFER_SIZE = 1000
 MAX_COORD = 23
 MAP_WIDTH = 25
 
@@ -18,6 +18,8 @@ PrevY       BYTE   16
 deltaX      SBYTE  0
 deltaY      SBYTE  0
 tempLoc     BYTE   ?
+score       dWord   0
+Strscre     byte  "Score: "
 
 .code
 main proc
@@ -29,17 +31,24 @@ main proc
 	call DrawPacMan
 	MainLoop:                            ; Main loop
 		call Render
+		Call DelayPacMan                 ;delays pacman
 		call Update
 		jmp MainLoop
 	exit
 main endp
 
+DelayPacMan Proc uses eax
+mov eax,350
+Call Delay
+ret
+DelayPacMan endp
 ; All procedures related to updating game state will
 ; be called from here.
 Update proc
 	call GetKey
 	call MovePacMan
 	call CheckMapLoc
+	
 	ret
 Update endp
 
@@ -174,6 +183,8 @@ CheckMapLoc proc
 			mov dh, PrevY
 			call GotoXY
 			call WriteChar
+			add score, 1                  ;increments the score by one
+			Call UpdateScore              ;updates score
 			jmp EndOfCheckMapLoc
 		
 	EndOfCheckMapLoc:
@@ -289,7 +300,19 @@ ReadMapFile proc USES edx eax ecx
 		call	CloseFile
 
 	quit:
+	Call UpdateScore
 		ret
 ReadMapFile endp
+
+UpdateScore proc uses eax edx 
+mov dh, 20
+mov dl, 50
+call Gotoxy
+mWrite "Score: "
+mov eax, score
+Call WriteInt
+
+ret
+UpdateScore endp
 
 end main
