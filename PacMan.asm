@@ -51,17 +51,12 @@ main proc
 	call DrawPacMan
 	MainLoop:                            ; Main loop
 		call Render
-		Call DelayPacMan                 ;delays pacman
+		call DelayPacMan                 ; delays pacman
 		call Update
 		jmp MainLoop
 	exit
 main endp
 
-DelayPacMan Proc uses eax
-mov eax,350
-Call Delay
-ret
-DelayPacMan endp
 ; All procedures related to updating game state will
 ; be called from here.
 Update proc
@@ -79,6 +74,12 @@ Render proc
 	call DrawPacMan
 	ret
 Render endp
+
+DelayPacMan proc USES eax
+	mov eax,350
+	call Delay
+	ret
+DelayPacMan endp
 
 ; Map key presses to W,A,S,D
 GetKey proc
