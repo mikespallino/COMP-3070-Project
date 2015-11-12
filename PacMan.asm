@@ -18,8 +18,17 @@ PrevY       BYTE   16
 deltaX      SBYTE  0
 deltaY      SBYTE  0
 tempLoc     BYTE   ?
-score       dWord   0
-Strscre     byte  "Score: "
+score       DWORD  0
+pointsToAdd DWORD  0
+Strscre     BYTE  "Score: "
+cherryItem  BYTE 224
+stwbryItem  BYTE 225
+orangeItem  BYTE 226
+appleItem   BYTE 227
+melonItem   BYTE 228
+galBssItem  BYTE 229
+bellItem    BYTE 230
+keyItem     BYTE 231
 
 .code
 main proc
@@ -28,6 +37,17 @@ main proc
 	mov	ecx,SIZEOF filename
 	call ReadString
 	call ReadMapFile                     ; Get a map
+
+	; The following is for debug
+	call DrawCherry
+	call DrawStrawberry
+	call DrawOrange
+	call DrawApple
+	call DrawMelon
+	call DrawGalaxianBoss
+	call DrawBell
+	call DrawKey
+
 	call DrawPacMan
 	MainLoop:                            ; Main loop
 		call Render
@@ -170,21 +190,84 @@ CheckMapLoc proc
 		mov tempLoc, bl
 		cmp bl, '#'                      ; Was this a wall?
 		je ResetPos                      ; Move back
-		jmp RemoveChar                   ; It was consumable.
+		jmp CheckTile                    ; It's probably consumable.
 
 		ResetPos:
 			call MoveBack 
 			jmp EndOfCheckMapLoc
 
+		CheckTile:
+			cmp bl, '.'
+			je PacDot
+			cmp bl, cherryItem
+			je Cherry
+			cmp bl, stwbryItem
+			je Strawberry
+			cmp bl, orangeItem
+			je Orange
+			cmp bl, appleItem
+			je Apple
+			cmp bl, melonItem
+			je Melon
+			cmp bl, galBssItem
+			je Boss
+			cmp bl, bellItem
+			je Bell
+			cmp bl, keyItem
+			je Key
+			jmp InvalidChar
+
+			PacDot:
+				mov pointsToAdd, 10
+				jmp RemoveChar
+
+			Cherry:
+				mov pointsToAdd, 100
+				jmp RemoveChar
+
+			Strawberry:
+				mov pointsToAdd, 300
+				jmp RemoveChar
+
+			Orange:
+				mov pointsToAdd, 500
+				jmp RemoveChar
+
+			Apple:
+				mov pointsToAdd, 700
+				jmp RemoveChar
+
+			Melon:
+				mov pointsToAdd, 1000
+				jmp RemoveChar
+
+			Boss:
+				mov pointsToAdd, 2000
+				jmp RemoveChar
+
+			Bell:
+				mov pointsToAdd, 3000
+				jmp RemoveChar
+
+			Key:
+				mov pointsToAdd, 5000
+				jmp RemoveChar
+
+			InvalidChar:
+				mov pointsToAdd, 0       ; We probably don't wont this on the map anyway.
+				jmp RemoveChar
+
+
 		RemoveChar:
 			mov al, ' '
-			;mov [edx], al
+			mov [edx], al
 			mov dl, PrevX
 			mov dh, PrevY
 			call GotoXY
 			call WriteChar
-			add score, 1                  ;increments the score by one
-			Call UpdateScore              ;updates score
+			mov eax, pointsToAdd
+			add score, eax               ; increments the score by one
+			Call UpdateScore             ; updates score
 			jmp EndOfCheckMapLoc
 		
 	EndOfCheckMapLoc:
@@ -218,16 +301,6 @@ MoveBack proc USES eax
 	mov PacManY, al
 	ret
 MoveBack endp
-
-; We should probably change this soon
-; We won't want the ugly refresh thing we have now.
-;DrawMap proc USES edx
-;	call ClrScr
-;	mov	edx,OFFSET buffer	; display the buffer
-;	call	WriteString
-;	call	Crlf
-;	ret
-;DrawMap endp
 
 ; Draw Pac Man
 DrawPacMan proc
@@ -263,56 +336,234 @@ ReadMapFile proc USES edx eax ecx
 	mov	fileHandle,eax
 
 	; Check for errors.
-	cmp	eax,INVALID_HANDLE_VALUE		; error opening file?
-	jne	file_ok					; no: skip
+	cmp	eax,INVALID_HANDLE_VALUE		 ; error opening file?
+	jne	file_ok					         ; no: skip
 	mWrite <"Cannot open file",0dh,0ah>
-	jmp	quit						; and quit
+	jmp	quit						     ; and quit
 	
 	file_ok:
-
 		; Read the file into a buffer.
 		mov	edx,OFFSET buffer
 		mov	ecx,BUFFER_SIZE
-		call	ReadFromFile
-		jnc	check_buffer_size			; error reading?
-		mWrite "Error reading file. "		; yes: show error message
-		call	WriteWindowsMsg
+		call ReadFromFile
+		jnc	check_buffer_size			 ; error reading?
+		mWrite "Error reading file. "	 ; yes: show error message
+		call WriteWindowsMsg
 		jmp	close_file
 	
 		check_buffer_size:
-			cmp	eax,BUFFER_SIZE			; buffer large enough?
-			jb	buf_size_ok				; yes
+			cmp	eax,BUFFER_SIZE			 ; buffer large enough?
+			jb buf_size_ok				 ; yes
 			mWrite <"Error: Buffer too small for the file",0dh,0ah>
-			jmp	quit						; and quit
+			jmp	quit				     ; and quit
 	
 		buf_size_ok:	
-			mov	buffer[eax],0		; insert null terminator
-			mWrite "File size: "
-			call WriteDec			; display file size
-			call Crlf
-			
 			mov edx, OFFSET buffer
 			call ClrScr
 			call WriteString
 
 	close_file:
 		mov	eax,fileHandle
-		call	CloseFile
+		call CloseFile
 
 	quit:
 	Call UpdateScore
 		ret
 ReadMapFile endp
 
-UpdateScore proc uses eax edx 
-mov dh, 20
-mov dl, 50
-call Gotoxy
-mWrite "Score: "
-mov eax, score
-Call WriteInt
+UpdateScore proc USES eax edx 
+	mov dh, 20
+	mov dl, 35
+	call GotoXY
+	mWrite "Score: "
+	mov eax, score
+	call WriteInt
 
-ret
+	ret
 UpdateScore endp
+
+DrawCherry proc USES eax ecx edx
+	mov eax, magenta + (black * 16)
+	call SetTextColor
+	mov eax, 0
+	mov ebx, 0
+
+	mov ecx, MAP_WIDTH
+	mov ax, 12
+	mov bl, cherryItem
+	mul ecx
+	mov edx, OFFSET buffer
+	mov ecx, 11
+	add eax, ecx
+	add edx, eax
+	mov [edx], bl
+	mov dl, 11
+	mov dh, 12
+	call GotoXY
+	movzx eax, cherryItem
+	call WriteChar
+	ret
+DrawCherry endp
+
+DrawStrawberry proc USES eax ecx edx
+	mov eax, red + (black * 16)
+	call SetTextColor
+	mov eax, 0
+	mov ebx, 0
+
+	mov ecx, MAP_WIDTH
+	mov ax, 10
+	mov bl, stwbryItem
+	mul ecx
+	mov edx, OFFSET buffer
+	mov ecx, 5
+	add eax, ecx
+	add edx, eax
+	mov [edx], bl
+	mov dl, 5
+	mov dh, 10
+	call GotoXY
+	movzx eax, stwbryItem
+	call WriteChar
+	ret
+DrawStrawberry endp
+
+DrawOrange proc USES eax ecx edx
+	mov eax, brown + (black * 16)
+	call SetTextColor
+	mov eax, 0
+	mov ebx, 0
+
+	mov ecx, MAP_WIDTH
+	mov ax, 6
+	mov bl, orangeItem
+	mul ecx
+	mov edx, OFFSET buffer
+	mov ecx, 14
+	add eax, ecx
+	add edx, eax
+	mov [edx], bl
+	mov dl, 14
+	mov dh, 6
+	call GotoXY
+	movzx eax, orangeItem
+	call WriteChar
+	ret
+DrawOrange endp
+
+DrawApple proc USES eax ecx edx
+	mov eax, green + (black * 16)
+	call SetTextColor
+	mov eax, 0
+	mov ebx, 0
+
+	mov ecx, MAP_WIDTH
+	mov ax, 3
+	mov bl, appleItem
+	mul ecx
+	mov edx, OFFSET buffer
+	mov ecx, 5
+	add eax, ecx
+	add edx, eax
+	mov [edx], bl
+	mov dl, 5
+	mov dh, 3
+	call GotoXY
+	movzx eax, appleItem
+	call WriteChar
+	ret
+DrawApple endp
+
+DrawMelon proc USES eax ecx edx
+	mov eax, yellow + (black * 16)
+	call SetTextColor
+	mov eax, 0
+	mov ebx, 0
+
+	mov ecx, MAP_WIDTH
+	mov ax, 18
+	mov bl, melonItem
+	mul ecx
+	mov edx, OFFSET buffer
+	mov ecx, 20
+	add eax, ecx
+	add edx, eax
+	mov [edx], bl
+	mov dl, 20
+	mov dh, 18
+	call GotoXY
+	movzx eax, melonItem
+	call WriteChar
+	ret
+DrawMelon endp
+
+DrawGalaxianBoss proc USES eax ecx edx
+	mov eax, blue + (black * 16)
+	call SetTextColor
+	mov eax, 0
+	mov ebx, 0
+
+	mov ecx, MAP_WIDTH
+	mov ax, 14
+	mov bl, galBssItem
+	mul ecx
+	mov edx, OFFSET buffer
+	mov ecx, 3
+	add eax, ecx
+	add edx, eax
+	mov [edx], bl
+	mov dl, 3
+	mov dh, 14
+	call GotoXY
+	movzx eax, galBssItem
+	call WriteChar
+	ret
+DrawGalaxianBoss endp
+
+DrawBell proc USES eax ecx edx
+	mov eax, yellow + (black * 16)
+	call SetTextColor
+	mov eax, 0
+	mov ebx, 0
+
+	mov ecx, MAP_WIDTH
+	mov ax, 1
+	mov bl, bellItem
+	mul ecx
+	mov edx, OFFSET buffer
+	mov ecx, 6
+	add eax, ecx
+	add edx, eax
+	mov [edx], bl
+	mov dl, 6
+	mov dh, 1
+	call GotoXY
+	movzx eax, bellItem
+	call WriteChar
+	ret
+DrawBell endp
+
+DrawKey proc USES eax ecx edx
+	mov eax, yellow + (black * 16)
+	call SetTextColor
+	mov eax, 0
+	mov ebx, 0
+
+	mov ecx, MAP_WIDTH
+	mov ax, 4
+	mov bl, keyItem
+	mul ecx
+	mov edx, OFFSET buffer
+	mov ecx, 12
+	add eax, ecx
+	add edx, eax
+	mov [edx], bl
+	mov dl, 12
+	mov dh, 4
+	call GotoXY
+	movzx eax, keyItem
+	call WriteChar
+	ret
+DrawKey endp
 
 end main
