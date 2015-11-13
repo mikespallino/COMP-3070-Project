@@ -271,7 +271,7 @@ CheckMapLoc proc
 			mov eax, pointsToAdd
 			add score, eax               ; increments the score by one
 			mov pointsToAdd, 0
-			Call UpdateScore             ; updates score
+			call UpdateScore             ; updates score
 			jmp EndOfCheckMapLoc
 		
 	EndOfCheckMapLoc:
@@ -371,7 +371,7 @@ ReadMapFile proc USES edx eax ecx
 		call CloseFile
 
 	quit:
-	Call UpdateScore
+		call UpdateScore
 		ret
 ReadMapFile endp
 
