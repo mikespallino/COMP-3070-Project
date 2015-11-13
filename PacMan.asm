@@ -1,4 +1,4 @@
-TITLE PacMan, Authors: Mike Spallino
+TITLE PacMan, Authors: Andrew Hart, Diego Prates, Mike Spallino, Josh Sullivan
 
 INCLUDE irvine32.inc
 INCLUDE macros.inc
@@ -83,6 +83,8 @@ DelayPacMan endp
 
 ; Map key presses to W,A,S,D
 GetKey proc
+	mov deltaX, 0
+	mov deltaY, 0
 	call ReadChar
 	cmp al, "w"
 	je Up
@@ -268,6 +270,7 @@ CheckMapLoc proc
 			call WriteChar
 			mov eax, pointsToAdd
 			add score, eax               ; increments the score by one
+			mov pointsToAdd, 0
 			Call UpdateScore             ; updates score
 			jmp EndOfCheckMapLoc
 		
