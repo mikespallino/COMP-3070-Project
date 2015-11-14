@@ -188,7 +188,7 @@ CheckMapLoc proc
 		add edx, eax
 		mov bl, [edx]
 		mov tempLoc, bl
-		cmp bl, '#'                      ; Was this a wall?
+		cmp bl, '²'                      ; Was this a wall?
 		je ResetPos                      ; Move back
 		jmp CheckTile                    ; It's probably consumable.
 
