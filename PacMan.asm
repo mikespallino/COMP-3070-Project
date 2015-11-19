@@ -29,6 +29,7 @@ melonItem   BYTE 228
 galBssItem  BYTE 229
 bellItem    BYTE 230
 keyItem     BYTE 231
+ticks       DWORD 0
 
 .code
 main proc
@@ -37,17 +38,6 @@ main proc
 	mov	ecx,SIZEOF filename
 	call ReadString
 	call ReadMapFile                     ; Get a map
-
-	; The following is for debug
-	call DrawCherry
-	call DrawStrawberry
-	call DrawOrange
-	call DrawApple
-	call DrawMelon
-	call DrawGalaxianBoss
-	call DrawBell
-	call DrawKey
-
 	call DrawPacMan
 	MainLoop:                            ; Main loop
 		call Render
@@ -63,20 +53,20 @@ Update proc
 	call GetKey
 	call MovePacMan
 	call CheckMapLoc
-	
 	ret
 Update endp
 
 ; All procedures related to rendering the game will
 ; be called from here.
 Render proc
-	;call DrawMap
 	call DrawPacMan
+	call HandleFruit
 	ret
 Render endp
 
 DelayPacMan proc USES eax
-	mov eax,350
+	mov eax,150
+	add ticks, 5
 	call Delay
 	ret
 DelayPacMan endp
@@ -135,7 +125,7 @@ GetKey proc
 GetKey endp
 
 ; Check to make sure this is a valid location to move the player to
-CheckMapLoc proc
+CheckMapLoc proc USES eax ebx
 	mov edx, OFFSET buffer
 	cmp PacManX, MAX_COORD
 	jg DecX
@@ -307,7 +297,7 @@ MoveBack proc USES eax
 MoveBack endp
 
 ; Draw Pac Man
-DrawPacMan proc
+DrawPacMan proc USES eax edx ecx
 	mov dl, PacManX                      ; Get Coordinates
 	mov dh, PacManY                      ; Get Coordinates
 	call GotoXY
@@ -386,6 +376,63 @@ UpdateScore proc USES eax edx
 	ret
 UpdateScore endp
 
+HandleFruit proc USES eax
+	mov eax, ticks
+	call WriteInt
+	cmp eax, 180
+	je DwChr
+	cmp eax, 360
+	je DwStr
+	cmp eax, 540
+	je DwOrg
+	cmp eax, 720
+	je DwApp
+	cmp eax, 900
+	je DwMel
+	cmp eax, 1080
+	je DwGB
+	cmp eax, 1260
+	je DwBl
+	cmp eax, 1440
+	je DwKey
+	jmp EndOfHandleFruit
+
+	DwChr:
+		call DrawCherry
+		jmp EndOfHandleFruit
+
+	DwStr:
+		call DrawStrawberry
+		jmp EndOfHandleFruit
+
+	DwOrg:
+		call DrawOrange
+		jmp EndOfHandleFruit
+
+	DwApp:
+		call DrawApple
+		jmp EndOfHandleFruit
+
+	DwMel:
+		call DrawMelon
+		jmp EndOfHandleFruit
+
+	DwGB:
+		call DrawGalaxianBoss
+		jmp EndOfHandleFruit
+
+	DwBl:
+		call DrawBell
+		jmp EndOfHandleFruit
+
+	DwKey:
+		call DrawKey
+		jmp EndOfHandleFruit
+	
+	EndOfHandleFruit:
+		ret
+HandleFruit endp
+
 DrawCherry proc USES eax ecx edx
 	mov eax, magenta + (black * 16)
 	call SetTextColor
@@ -410,6 +457,11 @@ DrawCherry proc USES eax ecx edx
 DrawCherry endp
 
 DrawStrawberry proc USES eax ecx edx
+	movzx eax, cherryItem
+	mov cherryItem, ' '
+	call DrawCherry
+	mov cherryItem, al
+
 	mov eax, red + (black * 16)
 	call SetTextColor
 	mov eax, 0
@@ -433,6 +485,11 @@ DrawStrawberry proc USES eax ecx edx
 DrawStrawberry endp
 
 DrawOrange proc USES eax ecx edx
+	movzx eax, stwbryItem
+	mov stwbryItem, ' '
+	call DrawStrawberry
+	mov stwbryItem, al
+
 	mov eax, brown + (black * 16)
 	call SetTextColor
 	mov eax, 0
@@ -456,6 +513,11 @@ DrawOrange proc USES eax ecx edx
 DrawOrange endp
 
 DrawApple proc USES eax ecx edx
+	movzx eax, orangeItem
+	mov orangeItem, ' '
+	call DrawOrange
+	mov orangeItem, al
+
 	mov eax, green + (black * 16)
 	call SetTextColor
 	mov eax, 0
@@ -479,6 +541,11 @@ DrawApple proc USES eax ecx edx
 DrawApple endp
 
 DrawMelon proc USES eax ecx edx
+	movzx eax, appleItem
+	mov appleItem, ' '
+	call DrawApple
+	mov appleItem, al
+
 	mov eax, yellow + (black * 16)
 	call SetTextColor
 	mov eax, 0
@@ -502,11 +569,15 @@ DrawMelon proc USES eax ecx edx
 DrawMelon endp
 
 DrawGalaxianBoss proc USES eax ecx edx
-	mov eax, blue + (black * 16)
+	movzx eax, melonItem
+	mov melonItem, ' '
+	call DrawMelon
+	mov melonItem, al
+
+	mov eax, lightBlue + (black * 16)
 	call SetTextColor
 	mov eax, 0
 	mov ebx, 0
-
 	mov ecx, MAP_WIDTH
 	mov ax, 14
 	mov bl, galBssItem
@@ -525,6 +596,11 @@ DrawGalaxianBoss proc USES eax ecx edx
 DrawGalaxianBoss endp
 
 DrawBell proc USES eax ecx edx
+	movzx eax, galBssItem
+	mov galBssItem, ' '
+	call DrawGalaxianBoss
+	mov galBssItem, al
+
 	mov eax, yellow + (black * 16)
 	call SetTextColor
 	mov eax, 0
@@ -548,6 +624,11 @@ DrawBell proc USES eax ecx edx
 DrawBell endp
 
 DrawKey proc USES eax ecx edx
+	movzx eax, bellItem
+	mov bellItem, ' '
+	call DrawBell
+	mov bellItem, al
+
 	mov eax, yellow + (black * 16)
 	call SetTextColor
 	mov eax, 0
