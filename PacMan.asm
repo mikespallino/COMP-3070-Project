@@ -5,7 +5,7 @@ INCLUDE macros.inc
 
 MapObject Struct
 	MapFile byte 10 Dup(0)
-	PacDots word ?
+	PacDots WORD ?
 MapObject Ends
 
 BUFFER_SIZE = 1000
@@ -13,56 +13,56 @@ MAX_COORD = 23
 MAP_WIDTH = 25
 
 .data
-Main_MenuStr byte "main menu.txt"
-buffer      BYTE   BUFFER_SIZE DUP(?)
-filenamePtr Dword offset Main_MenuStr
-fileHandle  HANDLE ?
-PacManX     BYTE   11
-PacManY     BYTE   16
-PrevX       BYTE   11
-PrevY       BYTE   16
-deltaX      SBYTE  0
-deltaY      SBYTE  0
-tempLoc     BYTE   ?
-score       DWORD  0
-pointsToAdd DWORD  0
-Strscre     BYTE  "Score: "
-cherryItem  BYTE 224
-stwbryItem  BYTE 225
-orangeItem  BYTE 226
-appleItem   BYTE 227
-melonItem   BYTE 228
-galBssItem  BYTE 229
-bellItem    BYTE 230
-keyItem     BYTE 231
-ticks       DWORD 0
-Map1 MapObject<"Map1.txt",223>
-Map2 MapObject<"Map2.txt",204>
-Map3 MapObject<"Map3.txt",232>
-Level byte ?
-PacDotsConsumed Dword 0
-PacDotCount Dword 0
+Main_MenuStr	BYTE "main menu.txt"
+buffer			BYTE   BUFFER_SIZE DUP(?)
+filenamePtr		DWORD offset Main_MenuStr
+fileHandle		HANDLE ?
+PacManX			BYTE   11
+PacManY			BYTE   16
+PrevX			BYTE   11
+PrevY			BYTE   16
+deltaX			SBYTE  0
+deltaY			SBYTE  0
+tempLoc			BYTE   ?
+score			DWORD  0
+pointsToAdd		DWORD  0
+Strscre			BYTE  "Score: "
+cherryItem		BYTE 224
+stwbryItem		BYTE 225
+orangeItem		BYTE 226
+appleItem		BYTE 227
+melonItem		BYTE 228
+galBssItem		BYTE 229
+bellItem		BYTE 230
+keyItem			BYTE 231
+ticks			DWORD 0
+Map1			MapObject<"Map1.txt",223>
+Map2			MapObject<"Map2.txt",204>
+Map3			MapObject<"Map3.txt",232>
+Level			BYTE ?
+PacDotsConsumed DWORD 0
+PacDotCount		DWORD 0
 
 .code
 main proc
-	Call ReadMapFile
-	Call ReadChar
+	call ReadMapFile
+	call ReadChar
 	mov ecx,3
 	MapLoop:
 		push ecx
 		mov level, cl
-		Call GetLevel						 ;sets the right map to be loaded
+		call GetLevel						 ; Sets the right map to be loaded
 
 		call ReadMapFile                     ; Get a map
 		call DrawPacMan
 		MainLoop:                            ; Main loop
 			call Render
-			call DelayPacMan                 ; delays pacman
+			call DelayPacMan                 ; Delays pacman
 			call Update
 			mov eax, PacDotCount
 			cmp eax, PacDotsConsumed
 			jg MainLoop
-			Call ResetGame					  ;resets game from the begining
+			call ResetGame					  ; Resets game from the begining
 			pop ecx
 			Loop MapLoop
 		  mWrite <"You Won!">
@@ -393,13 +393,8 @@ UpdateScore proc USES eax edx
 	mov dl, 35
 	call GotoXY
 	mWrite "Score: "
-	mov eax, PacDotsConsumed
-	Call WriteHex
-	mov dh, 20
-	mov dl, 35
-	call GotoXY
-	mov eax, PacDotCount
-	call WriteHex
+	mov eax, score
+	call WriteInt
 	ret
 UpdateScore endp
 
@@ -729,8 +724,8 @@ DrawKey proc USES eax ecx edx
 	ret
 DrawKey endp
 
-;Since ecx goes from 3 to 1, this function uses 3 to load the first map
-;and 1 to load the last map
+; Since ecx goes from 3 to 1, this function uses 3 to load the first map
+; and 1 to load the last map
 GetLevel proc uses eax		
 	cmp Level,3
 	je Down1
@@ -756,11 +751,11 @@ GetLevel proc uses eax
 GetLevel endp
 
 ResetGame proc
-		mov score, 0
 		call clrscr
 		mov PacManX, 11
 		mov PacManY, 16
 		mov PacDotsConsumed, 0
+		mov ticks, 0
 	ret
 ResetGame endp
 
