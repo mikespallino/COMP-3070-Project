@@ -36,11 +36,11 @@ galBssItem  BYTE 229
 bellItem    BYTE 230
 keyItem     BYTE 231
 ticks       DWORD 0
-Map1 MapObject<"Map1.txt",224>
-Map2 MapObject<"Map2.txt",429>
-Map3 MapObject<"Map3.txt",629>
+Map1 MapObject<"Map1.txt",223>
+Map2 MapObject<"Map2.txt",204>
+Map3 MapObject<"Map3.txt",232>
 Level byte ?
-PacDotsConsumed word 0
+PacDotsConsumed Dword 0
 PacDotCount Dword 0
 
 .code
@@ -59,9 +59,9 @@ main proc
 			call Render
 			call DelayPacMan                 ; delays pacman
 			call Update
-			mov ax, word PTR PacDotCount
-			cmp ax, PacDotsConsumed
-			jge MainLoop
+			mov eax, PacDotCount
+			cmp eax, PacDotsConsumed
+			jg MainLoop
 			Call ResetGame					  ;resets game from the begining
 			pop ecx
 			Loop MapLoop
@@ -233,6 +233,7 @@ CheckMapLoc proc USES eax ebx
 			jmp InvalidChar
 
 			PacDot:
+				add PacDotsConsumed, 1
 				mov pointsToAdd, 10
 				jmp RemoveChar
 
@@ -387,14 +388,18 @@ ReadMapFile proc USES edx eax ecx
 		ret
 ReadMapFile endp
 
-UpdateScore proc USES eax edx 
+UpdateScore proc USES eax edx
 	mov dh, 20
 	mov dl, 35
 	call GotoXY
 	mWrite "Score: "
-	mov eax, score
-	call WriteInt
-	add PacDotsConsumed, 1
+	mov eax, PacDotsConsumed
+	Call WriteHex
+	mov dh, 20
+	mov dl, 35
+	call GotoXY
+	mov eax, PacDotCount
+	call WriteHex
 	ret
 UpdateScore endp
 
@@ -450,7 +455,7 @@ HandleFruit proc USES eax
 	DwKey:
 		call DrawKey
 		jmp EndOfHandleFruit
-	
+
 	EndOfHandleFruit:
 		ret
 HandleFruit endp
@@ -463,12 +468,18 @@ DrawCherry proc USES eax ecx edx
 
 	mov ecx, MAP_WIDTH
 	mov ax, 12
-	mov bl, cherryItem
+	
 	mul ecx
 	mov edx, OFFSET buffer
 	mov ecx, 11
 	add eax, ecx
 	add edx, eax
+	mov bl,[edx]
+	cmp bl, '.'
+	jne NoDot
+	sub PacDotCount, 1
+	NoDot:
+	mov bl, cherryItem
 	mov [edx], bl
 	mov dl, 11
 	mov dh, 12
@@ -491,12 +502,18 @@ DrawStrawberry proc USES eax ecx edx
 
 	mov ecx, MAP_WIDTH
 	mov ax, 10
-	mov bl, stwbryItem
+	
 	mul ecx
 	mov edx, OFFSET buffer
 	mov ecx, 5
 	add eax, ecx
 	add edx, eax
+	mov bl,[edx]
+	cmp bl, '.'
+	jne NoDot
+	sub PacDotCount, 1
+	NoDot:
+	mov bl, stwbryItem
 	mov [edx], bl
 	mov dl, 5
 	mov dh, 10
@@ -507,6 +524,7 @@ DrawStrawberry proc USES eax ecx edx
 DrawStrawberry endp
 
 DrawOrange proc USES eax ecx edx
+	
 	movzx eax, stwbryItem
 	mov stwbryItem, ' '
 	call DrawStrawberry
@@ -519,12 +537,18 @@ DrawOrange proc USES eax ecx edx
 
 	mov ecx, MAP_WIDTH
 	mov ax, 6
-	mov bl, orangeItem
+	
 	mul ecx
 	mov edx, OFFSET buffer
 	mov ecx, 14
 	add eax, ecx
 	add edx, eax
+	mov bl,[edx]
+	cmp bl, '.'
+	jne NoDot
+	sub PacDotCount, 1
+	NoDot:
+	mov bl, orangeItem
 	mov [edx], bl
 	mov dl, 14
 	mov dh, 6
@@ -547,12 +571,18 @@ DrawApple proc USES eax ecx edx
 
 	mov ecx, MAP_WIDTH
 	mov ax, 3
-	mov bl, appleItem
+	
 	mul ecx
 	mov edx, OFFSET buffer
 	mov ecx, 5
 	add eax, ecx
 	add edx, eax
+	mov bl,[edx]
+	cmp bl, '.'
+	jne NoDot
+	sub PacDotCount, 1
+	NoDot:
+	mov bl, appleItem
 	mov [edx], bl
 	mov dl, 5
 	mov dh, 3
@@ -575,12 +605,18 @@ DrawMelon proc USES eax ecx edx
 
 	mov ecx, MAP_WIDTH
 	mov ax, 18
-	mov bl, melonItem
+	
 	mul ecx
 	mov edx, OFFSET buffer
 	mov ecx, 20
 	add eax, ecx
 	add edx, eax
+	mov bl,[edx]
+	cmp bl, '.'
+	jne NoDot
+	sub PacDotCount, 1
+	NoDot:
+	mov bl, melonItem
 	mov [edx], bl
 	mov dl, 20
 	mov dh, 18
@@ -602,12 +638,18 @@ DrawGalaxianBoss proc USES eax ecx edx
 	mov ebx, 0
 	mov ecx, MAP_WIDTH
 	mov ax, 14
-	mov bl, galBssItem
+	
 	mul ecx
 	mov edx, OFFSET buffer
 	mov ecx, 3
 	add eax, ecx
 	add edx, eax
+	mov bl,[edx]
+	cmp bl, '.'
+	jne NoDot
+	sub PacDotCount, 1
+	NoDot:
+	mov bl, galBssItem
 	mov [edx], bl
 	mov dl, 3
 	mov dh, 14
@@ -618,6 +660,7 @@ DrawGalaxianBoss proc USES eax ecx edx
 DrawGalaxianBoss endp
 
 DrawBell proc USES eax ecx edx
+	
 	movzx eax, galBssItem
 	mov galBssItem, ' '
 	call DrawGalaxianBoss
@@ -630,12 +673,18 @@ DrawBell proc USES eax ecx edx
 
 	mov ecx, MAP_WIDTH
 	mov ax, 1
-	mov bl, bellItem
+	
 	mul ecx
 	mov edx, OFFSET buffer
 	mov ecx, 6
 	add eax, ecx
 	add edx, eax
+	mov bl,[edx]
+	cmp bl, '.'
+	jne NoDot
+	sub PacDotCount, 1
+	NoDot:
+	mov bl, bellItem
 	mov [edx], bl
 	mov dl, 6
 	mov dh, 1
@@ -646,6 +695,7 @@ DrawBell proc USES eax ecx edx
 DrawBell endp
 
 DrawKey proc USES eax ecx edx
+	
 	movzx eax, bellItem
 	mov bellItem, ' '
 	call DrawBell
@@ -658,12 +708,18 @@ DrawKey proc USES eax ecx edx
 
 	mov ecx, MAP_WIDTH
 	mov ax, 4
-	mov bl, keyItem
+	
 	mul ecx
 	mov edx, OFFSET buffer
 	mov ecx, 12
 	add eax, ecx
 	add edx, eax
+	mov bl,[edx]
+	cmp bl, '.'
+	jne NoDot
+	sub PacDotCount, 1
+	NoDot:
+	mov bl, keyItem
 	mov [edx], bl
 	mov dl, 12
 	mov dh, 4
@@ -704,6 +760,7 @@ ResetGame proc
 		call clrscr
 		mov PacManX, 11
 		mov PacManY, 16
+		mov PacDotsConsumed, 0
 	ret
 ResetGame endp
 
