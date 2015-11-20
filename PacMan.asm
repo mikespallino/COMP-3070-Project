@@ -3,13 +3,19 @@ TITLE PacMan, Authors: Andrew Hart, Diego Prates, Mike Spallino, Josh Sullivan
 INCLUDE irvine32.inc
 INCLUDE macros.inc
 
+MapObject Struct
+	MapFile byte 10 Dup(0)
+	PacDots word ?
+MapObject Ends
+
 BUFFER_SIZE = 1000
 MAX_COORD = 23
 MAP_WIDTH = 25
 
 .data
+Main_MenuStr byte "main menu.txt"
 buffer      BYTE   BUFFER_SIZE DUP(?)
-filename    BYTE   80 DUP(0)
+filenamePtr Dword offset Main_MenuStr
 fileHandle  HANDLE ?
 PacManX     BYTE   11
 PacManY     BYTE   16
@@ -30,21 +36,37 @@ galBssItem  BYTE 229
 bellItem    BYTE 230
 keyItem     BYTE 231
 ticks       DWORD 0
+Map1 MapObject<"Map1.txt",224>
+Map2 MapObject<"Map2.txt",429>
+Map3 MapObject<"Map3.txt",629>
+Level byte ?
+PacDotsConsumed word 0
+PacDotCount Dword 0
 
 .code
 main proc
-	mWrite "Enter an input filename: "
-	mov	edx,OFFSET filename
-	mov	ecx,SIZEOF filename
-	call ReadString
-	call ReadMapFile                     ; Get a map
-	call DrawPacMan
-	MainLoop:                            ; Main loop
-		call Render
-		call DelayPacMan                 ; delays pacman
-		call Update
-		jmp MainLoop
-	exit
+	Call ReadMapFile
+	Call ReadChar
+	mov ecx,3
+	MapLoop:
+		push ecx
+		mov level, cl
+		Call GetLevel						 ;sets the right map to be loaded
+
+		call ReadMapFile                     ; Get a map
+		call DrawPacMan
+		MainLoop:                            ; Main loop
+			call Render
+			call DelayPacMan                 ; delays pacman
+			call Update
+			mov ax, word PTR PacDotCount
+			cmp ax, PacDotsConsumed
+			jge MainLoop
+			Call ResetGame					  ;resets game from the begining
+			pop ecx
+			Loop MapLoop
+		  mWrite <"You Won!">
+		exit
 main endp
 
 ; All procedures related to updating game state will
@@ -325,7 +347,7 @@ DrawPacMan endp
 ; Read File from the book
 ReadMapFile proc USES edx eax ecx
 	; Open the file for input.
-	mov	edx,OFFSET filename
+	mov	edx, filenamePtr
 	call	OpenInputFile
 	mov	fileHandle,eax
 
@@ -372,7 +394,7 @@ UpdateScore proc USES eax edx
 	mWrite "Score: "
 	mov eax, score
 	call WriteInt
-
+	add PacDotsConsumed, 1
 	ret
 UpdateScore endp
 
@@ -650,5 +672,39 @@ DrawKey proc USES eax ecx edx
 	call WriteChar
 	ret
 DrawKey endp
+
+;Since ecx goes from 3 to 1, this function uses 3 to load the first map
+;and 1 to load the last map
+GetLevel proc uses eax		
+	cmp Level,3
+	je Down1
+	cmp Level,2
+	je Down2
+	cmp Level,1
+	mov fileNamePtr, offset map3.MapFile
+	movzx eax, map3.PAcDots
+	mov PacDotCount, eax
+	jmp endprog
+	Down2:
+		mov fileNamePtr, offset map2.MapFile
+		movzx eax, map2.PacDots
+		mov PacDotCount, eax
+	jmp endprog
+	Down1:
+		mov fileNamePtr, offset map1.MapFile
+		movzx eax , map1.PacDots
+		mov PacDotCount, eax
+		endprog:
+		ret
+
+GetLevel endp
+
+ResetGame proc
+		mov score, 0
+		call clrscr
+		mov PacManX, 11
+		mov PacManY, 16
+	ret
+ResetGame endp
 
 end main
