@@ -12,6 +12,8 @@ BUFFER_SIZE = 1000
 MAX_COORD = 23
 MAP_WIDTH = 25
 
+
+
 .data
 Main_MenuStr	BYTE "main menu.txt"
 buffer			BYTE   BUFFER_SIZE DUP(?)
@@ -36,21 +38,21 @@ galBssItem		BYTE 229
 bellItem		BYTE 230
 keyItem			BYTE 231
 ticks			DWORD 0
-Map1			MapObject<"Map1.txt",223>
-Map2			MapObject<"Map2.txt",204>
-Map3			MapObject<"Map3.txt",232>
+Map1			MapObject<"Map1.txt",205>
+Map2			MapObject<"Map2.txt",233>
+Map3			MapObject<"Map3.txt",224>
 Level			BYTE ?
 PacDotsConsumed DWORD 0
 PacDotCount		DWORD 0
+TotalTickCount  DWORD 0
+MaxTickCount    DWORD 1500
 
 .code
 main proc
 	call ReadMapFile
 	call ReadChar
-	mov ecx,3
+	mov level, 3
 	MapLoop:
-		push ecx
-		mov level, cl
 		call GetLevel						 ; Sets the right map to be loaded
 
 		call ReadMapFile                     ; Get a map
@@ -59,13 +61,19 @@ main proc
 			call Render
 			call DelayPacMan                 ; Delays pacman
 			call Update
-			mov eax, PacDotCount
-			cmp eax, PacDotsConsumed
-			jg MainLoop
-			call ResetGame					  ; Resets game from the begining
-			pop ecx
-			Loop MapLoop
+			call CheckTickCount
+			;mov eax, PacDotCount
+			;cmp eax, PacDotsConsumed		 ;compares the amoun of pactdots consumed to the amount on the board
+			jmp MainLoop
+			NextMap::
+			call ResetGame					 ; Resets game from the begining
+			sub level, 1
+			cmp level, 0
+			je EndGame
+			jmp MapLoop
+			EndGame:
 		  mWrite <"You Won!">
+		  Call ReadChar
 		exit
 main endp
 
@@ -163,7 +171,7 @@ CheckMapLoc proc USES eax ebx
 
 	WrapPosBack:
 		mov PacManX, 0
-		jmp RemoveChar
+		jmp GetCoordChar
 
 	; We've moved too far forward in the Y
 	DecY:
@@ -181,7 +189,7 @@ CheckMapLoc proc USES eax ebx
 
 	WrapPosForward:
 		mov PacManX, 22
-		jmp RemoveChar
+		jmp GetCoordChar
 
 	; We've moved to far back in the Y
 	IncX:
@@ -759,4 +767,29 @@ ResetGame proc
 	ret
 ResetGame endp
 
-end main
+CheckTickCount Proc uses eax
+	mov eax, ticks
+	cmp eax, MaxTickCount
+	jle NotEnoughTicks
+	call CheckMapForDots
+	NotEnoughTicks:
+ret
+CheckTickCount endp 
+
+CheckMapForDots proc uses edx ecx eax
+
+mov edx, offset buffer
+mov ecx, sizeof buffer
+L1:
+	mov al, [edx]
+	cmp al, '.'
+	je ThereIsDot
+	add edx, 1
+	Loop L1
+	call DelayPacMan
+	jmp NextMap
+ThereIsDot:
+ret
+CheckMapForDots endp 
+
+end Main
