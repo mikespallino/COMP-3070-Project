@@ -11,7 +11,7 @@ MapObject Ends
 BUFFER_SIZE = 1000
 MAX_COORD = 23
 MAP_WIDTH = 25
-
+ 
 
 
 .data
@@ -62,8 +62,6 @@ main proc
 			call DelayPacMan                 ; Delays pacman
 			call Update
 			call CheckTickCount
-			;mov eax, PacDotCount
-			;cmp eax, PacDotsConsumed		 ;compares the amoun of pactdots consumed to the amount on the board
 			jmp MainLoop
 			NextMap::
 			call ResetGame					 ; Resets game from the begining
@@ -72,6 +70,7 @@ main proc
 			je EndGame
 			jmp MapLoop
 			EndGame:
+			EndGame2::
 		  mWrite <"You Won!">
 		  Call ReadChar
 		exit
@@ -83,7 +82,19 @@ Update proc
 	call GetKey
 	call MovePacMan
 	call CheckMapLoc
+
+	mov edx, 0
+	mov eax, ticks
+	add eax, 100
+	mov ebx, 100
+	div ebx
+	cmp edx, 0
+	jne SkipLaser
+	Call FireLaser
+	SkipLaser:
 	ret
+
+	
 Update endp
 
 ; All procedures related to rendering the game will
@@ -463,6 +474,34 @@ HandleFruit proc USES eax
 		ret
 HandleFruit endp
 
+FireLaser proc
+mov eax, 23
+Call RandomRange
+mov dl, al 
+mov dh, 0
+mov ecx, 25
+L1:
+	Call GotoXy
+	mov eax, 0
+	Call WriteChar
+	add dh,1
+	cmp dl, PacManX
+	je EndGame2
+
+	mov eax, 10
+	call delay
+	Loop L1
+
+	mov dh, 0
+	mov dl, 0
+	call gotoxy
+
+	mov edx, offset buffer
+	Call WriteString
+
+ret
+FireLaser endp
+
 DrawCherry proc USES eax ecx edx
 	mov eax, magenta + (black * 16)
 	call SetTextColor
@@ -477,11 +516,6 @@ DrawCherry proc USES eax ecx edx
 	mov ecx, 11
 	add eax, ecx
 	add edx, eax
-	mov bl,[edx]
-	cmp bl, '.'
-	jne NoDot
-	sub PacDotCount, 1
-	NoDot:
 	mov bl, cherryItem
 	mov [edx], bl
 	mov dl, 11
@@ -511,11 +545,6 @@ DrawStrawberry proc USES eax ecx edx
 	mov ecx, 5
 	add eax, ecx
 	add edx, eax
-	mov bl,[edx]
-	cmp bl, '.'
-	jne NoDot
-	sub PacDotCount, 1
-	NoDot:
 	mov bl, stwbryItem
 	mov [edx], bl
 	mov dl, 5
@@ -546,11 +575,6 @@ DrawOrange proc USES eax ecx edx
 	mov ecx, 14
 	add eax, ecx
 	add edx, eax
-	mov bl,[edx]
-	cmp bl, '.'
-	jne NoDot
-	sub PacDotCount, 1
-	NoDot:
 	mov bl, orangeItem
 	mov [edx], bl
 	mov dl, 14
@@ -580,11 +604,6 @@ DrawApple proc USES eax ecx edx
 	mov ecx, 5
 	add eax, ecx
 	add edx, eax
-	mov bl,[edx]
-	cmp bl, '.'
-	jne NoDot
-	sub PacDotCount, 1
-	NoDot:
 	mov bl, appleItem
 	mov [edx], bl
 	mov dl, 5
@@ -614,11 +633,6 @@ DrawMelon proc USES eax ecx edx
 	mov ecx, 20
 	add eax, ecx
 	add edx, eax
-	mov bl,[edx]
-	cmp bl, '.'
-	jne NoDot
-	sub PacDotCount, 1
-	NoDot:
 	mov bl, melonItem
 	mov [edx], bl
 	mov dl, 20
@@ -647,11 +661,6 @@ DrawGalaxianBoss proc USES eax ecx edx
 	mov ecx, 3
 	add eax, ecx
 	add edx, eax
-	mov bl,[edx]
-	cmp bl, '.'
-	jne NoDot
-	sub PacDotCount, 1
-	NoDot:
 	mov bl, galBssItem
 	mov [edx], bl
 	mov dl, 3
@@ -682,11 +691,6 @@ DrawBell proc USES eax ecx edx
 	mov ecx, 6
 	add eax, ecx
 	add edx, eax
-	mov bl,[edx]
-	cmp bl, '.'
-	jne NoDot
-	sub PacDotCount, 1
-	NoDot:
 	mov bl, bellItem
 	mov [edx], bl
 	mov dl, 6
@@ -717,11 +721,6 @@ DrawKey proc USES eax ecx edx
 	mov ecx, 12
 	add eax, ecx
 	add edx, eax
-	mov bl,[edx]
-	cmp bl, '.'
-	jne NoDot
-	sub PacDotCount, 1
-	NoDot:
 	mov bl, keyItem
 	mov [edx], bl
 	mov dl, 12
@@ -793,3 +792,4 @@ ret
 CheckMapForDots endp 
 
 end Main
+
