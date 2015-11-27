@@ -70,10 +70,18 @@ main proc
 			je EndGame
 			jmp MapLoop
 			EndGame:
+			mov dl, 13
+			mov dh, 25
+			call GotoXY
+			mWrite <"You Won! ">
+			exit
 			EndGame2::
-		  mWrite <"You Won!">
+			mov dl, 25
+			mov dh, 13
+			call GotoXY
+			mWrite <"You Lose! ">
+			exit
 		  Call ReadChar
-		exit
 main endp
 
 ; All procedures related to updating game state will
@@ -479,10 +487,12 @@ mov eax, 23
 Call RandomRange
 mov dl, al 
 mov dh, 0
-mov ecx, 25
+mov ecx, 22
+mov eax, red + (black * 16)
+call SetTextColor
 L1:
 	Call GotoXy
-	mov eax, 0
+	mov eax, 219
 	Call WriteChar
 	add dh,1
 	cmp dl, PacManX
@@ -495,6 +505,9 @@ L1:
 	mov dh, 0
 	mov dl, 0
 	call gotoxy
+
+	mov eax, white + (black * 16)
+	call SetTextColor
 
 	mov edx, offset buffer
 	Call WriteString
