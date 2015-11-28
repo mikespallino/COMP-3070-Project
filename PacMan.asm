@@ -46,6 +46,7 @@ PacDotsConsumed DWORD 0
 PacDotCount		DWORD 0
 TotalTickCount  DWORD 0
 MaxTickCount    DWORD 1500
+laserCoord		BYTE ?
 
 .code
 main proc
@@ -90,19 +91,8 @@ Update proc
 	call GetKey
 	call MovePacMan
 	call CheckMapLoc
-
-	mov edx, 0
-	mov eax, ticks
-	add eax, 100
-	mov ebx, 100
-	div ebx
-	cmp edx, 0
-	jne SkipLaser
-	Call FireLaser
-	SkipLaser:
+	call LaserProc
 	ret
-
-	
 Update endp
 
 ; All procedures related to rendering the game will
@@ -483,36 +473,34 @@ HandleFruit proc USES eax
 HandleFruit endp
 
 FireLaser proc
-mov eax, 23
-Call RandomRange
-mov dl, al 
-mov dh, 0
-mov ecx, 22
-mov eax, red + (black * 16)
-call SetTextColor
-L1:
-	Call GotoXy
-	mov eax, 219
-	Call WriteChar
-	add dh,1
-	cmp dl, PacManX
-	je EndGame2
-
-	mov eax, 10
-	call delay
-	Loop L1
-
+	mov dl, laserCoord 
 	mov dh, 0
-	mov dl, 0
-	call gotoxy
-
-	mov eax, white + (black * 16)
+	mov ecx, 22
+	mov eax, red + (black * 16)
 	call SetTextColor
+	L1:
+		Call GotoXy
+		mov eax, 219
+		Call WriteChar
+		add dh,1
+		cmp dl, PacManX
+		je EndGame2
 
-	mov edx, offset buffer
-	Call WriteString
+		mov eax, 10
+		call delay
+		Loop L1
 
-ret
+		mov dh, 0
+		mov dl, 0
+		call gotoxy
+
+		mov eax, white + (black * 16)
+		call SetTextColor
+
+		mov edx, offset buffer
+		Call WriteString
+
+	ret
 FireLaser endp
 
 DrawCherry proc USES eax ecx edx
@@ -804,5 +792,52 @@ ThereIsDot:
 ret
 CheckMapForDots endp 
 
-end Main
+LaserProc proc USES eax ebx edx
+	mov edx, 0
+	mov eax, ticks
+	add eax, 100
+	mov ebx, 100
+	div ebx
+	cmp edx, 0
+	jne SkipLaser
+	Call FireLaser
+	SkipLaser:
+	cmp edx, 80
+	jne NoLaser
+	call FlashLaser
+	NoLaser:
+	ret
+LaserProc endp
 
+FlashLaser proc
+	mov eax, red + (black * 16)
+	call SetTextColor
+	mov eax, 23
+	call RandomRange
+	mov laserCoord, al
+	mov dl, al
+	mov dh, 0
+	call GotoXY
+	mov eax, '²'
+	call WriteChar
+	mov dh, 21
+	call GotoXY
+	mov eax, '²'
+	call WriteChar
+	mov eax, 30
+	call Delay
+	mov eax, white + (black * 16)
+	call SetTextColor
+	mov dl, laserCoord
+	mov dh, 0
+	call GotoXY
+	mov eax, '²'
+	call WriteChar
+	mov dh, 21
+	call GotoXY
+	mov eax, '²'
+	call WriteChar
+	ret
+FlashLaser endp
+
+end Main
