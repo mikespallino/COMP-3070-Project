@@ -5,7 +5,7 @@ INCLUDE macros.inc
 
 MapObject Struct
 	MapFile byte 10 Dup(0)
-	PacDots WORD ?
+	MapIntro byte 15 Dup(0)
 MapObject Ends
 
 BUFFER_SIZE = 1000
@@ -38,9 +38,9 @@ galBssItem		BYTE 229
 bellItem		BYTE 230
 keyItem			BYTE 231
 ticks			DWORD 0
-Map1			MapObject<"Map1.txt",205>
-Map2			MapObject<"Map2.txt",233>
-Map3			MapObject<"Map3.txt",224>
+Map1			MapObject<"Map1.txt","Level1.txt">
+Map2			MapObject<"Map2.txt","Level2.txt">
+Map3			MapObject<"Map3.txt","Level3.txt">
 Level			BYTE ?
 PacDotsConsumed DWORD 0
 PacDotCount		DWORD 0
@@ -56,7 +56,6 @@ main proc
 	MapLoop:
 		call GetLevel						 ; Sets the right map to be loaded
 
-		call ReadMapFile                     ; Get a map
 		call DrawPacMan
 		MainLoop:                            ; Main loop
 			call Render
@@ -740,19 +739,28 @@ GetLevel proc uses eax
 	cmp Level,2
 	je Down2
 	cmp Level,1
+	mov fileNamePtr, offset map3.MapIntro
+	call ReadMapFile
+	mov eax, 1000
+	Call Delay
 	mov fileNamePtr, offset map3.MapFile
-	movzx eax, map3.PAcDots
-	mov PacDotCount, eax
+	Call ReadMapFile
 	jmp endprog
 	Down2:
+		mov fileNamePtr, offset map2.MapIntro
+		call ReadMapFile
+		mov eax, 1000
+		Call Delay
 		mov fileNamePtr, offset map2.MapFile
-		movzx eax, map2.PacDots
-		mov PacDotCount, eax
-	jmp endprog
+		Call ReadMapFile
+		jmp endprog
 	Down1:
+		mov fileNamePtr, offset map1.MapIntro
+		call ReadMapFile
+		mov eax, 1000
+		Call Delay
 		mov fileNamePtr, offset map1.MapFile
-		movzx eax , map1.PacDots
-		mov PacDotCount, eax
+		Call ReadMapFile
 		endprog:
 		ret
 
