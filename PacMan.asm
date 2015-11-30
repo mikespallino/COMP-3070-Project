@@ -87,10 +87,10 @@ main proc
 main endp
 
 ExitProc proc
-		mov dl, 13
+		mov dl, 0
 		mov dh, 25
 		call GotoXY
-		mwrite <"Thank you for play ">
+		mwrite <"Thank you for playing! ">
 		call crlf
 	exit
 ret
@@ -125,16 +125,15 @@ splash proc
 		call DrawMap
 		ret
 	DrawHelp:
-		call SaveBufferOut
 		call DrawHelpProc
 		jmp ReadCharLoop
 	About:
-		call SaveBufferOut
 		call AboutGame
 		jmp ReadCharLoop
 splash endp
 
 AboutGame proc
+	;scall SaveBufferOut
 	mov fileNamePtr, offset AboutMenu.MapFile
 	call ReadMapFile
 	ret
@@ -499,7 +498,6 @@ UpdateScore endp
 
 HandleFruit proc USES eax
 	mov eax, ticks
-	call WriteInt
 	cmp eax, 180
 	je DwChr
 	cmp eax, 360
