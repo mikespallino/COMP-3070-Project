@@ -4,7 +4,7 @@ INCLUDE irvine32.inc
 INCLUDE macros.inc
 
 MapObject Struct
-	MapFile byte 10 Dup(0)
+	MapFile byte 100 Dup(0)
 	MapIntro byte 15 Dup(0)
 MapObject Ends
 
@@ -17,6 +17,7 @@ MAP_WIDTH = 25
 .data
 Main_MenuStr	BYTE "main menu.txt"
 buffer			BYTE   BUFFER_SIZE DUP(?)
+saveBuffer		BYTE   BUFFER_SIZE DUP(?)
 filenamePtr		DWORD offset Main_MenuStr
 fileHandle		HANDLE ?
 PacManX			BYTE   11
@@ -41,6 +42,8 @@ ticks			DWORD 0
 Map1			MapObject<"Map1.txt","Level1.txt">
 Map2			MapObject<"Map2.txt","Level2.txt">
 Map3			MapObject<"Map3.txt","Level3.txt">
+HelpMenu		MapObject<"HelpMenu.txt",225>
+AboutMenu		MapObject<"AboutMenu.txt",222>
 Level			BYTE ?
 PacDotsConsumed DWORD 0
 PacDotCount		DWORD 0
@@ -51,9 +54,8 @@ laserCoord		BYTE ?
 .code
 main proc
 	call ReadMapFile
-	call ReadChar
+	call splash
 	mov level, 3
-	MapLoop:
 		call GetLevel						 ; Sets the right map to be loaded
 
 		call DrawPacMan
@@ -74,6 +76,7 @@ main proc
 			mov dh, 25
 			call GotoXY
 			mWrite <"You Won! ">
+		  Call ReadChar
 			exit
 			EndGame2::
 			mov dl, 25
@@ -83,6 +86,53 @@ main proc
 			exit
 		  Call ReadChar
 main endp
+
+DrawMap proc USES edx
+	call ClrScr
+	mov	edx, OFFSET buffer	; display the buffer
+	call WriteString
+	call Crlf
+	ret
+DrawMap endp
+
+; splash procedure
+splash proc
+	ReadCharLoop:
+		call ReadChar
+		cmp al, "p"
+		je LoadGame
+		cmp al, "h"
+		je DrawHelp
+		cmp al, "a"
+		je About
+		jmp ReadCharLoop
+	LoadGame:
+		call LoadBufferIn
+		call DrawMap
+		ret
+	DrawHelp:
+		call SaveBufferOut
+		call DrawHelpProc
+		jmp ReadCharLoop
+	About:
+		call SaveBufferOut
+		call AboutGame
+		jmp ReadCharLoop
+splash endp
+
+AboutGame proc
+	mov fileNamePtr, offset AboutMenu.MapFile
+	call ReadMapFile
+	ret
+AboutGame endp
+
+;Draw help procedure print the help screen
+DrawHelpProc proc
+	mov fileNamePtr, offset HelpMenu.MapFile
+	call ReadMapFile
+	call DrawHelpFruit
+	ret
+DrawHelpProc endp
 
 ; All procedures related to updating game state will
 ; be called from here.
@@ -114,9 +164,18 @@ GetKey proc
 	mov deltaX, 0
 	mov deltaY, 0
 	call ReadChar
+	cmp al, "h"
+	je DrawHelp
+
 	cmp al, "w"
 	je Up
 	jne NotUp
+
+	DrawHelp:
+		call SaveBufferOut
+		call DrawHelpProc
+		call Splash
+		jmp EndOfGetKeyProc
 
 	Up:
 		mov deltaX, 0
@@ -847,5 +906,100 @@ FlashLaser proc
 	call WriteChar
 	ret
 FlashLaser endp
+
+; Save out what was in the buffer to the save buffer
+; Use for switching map files
+SaveBufferOut proc USES edx esi edi
+	mov esi, OFFSET buffer
+	mov edi, OFFSET saveBuffer
+	mov ecx, BUFFER_SIZE
+	SaveLoop:
+		movzx edx, BYTE PTR [esi]
+
+		mov [edi], dl
+		add esi, TYPE buffer
+		add edi, TYPE buffer
+	Loop SaveLoop
+	ret
+SaveBufferOut endp
+
+; Load whatever was put into the saveBuffer back into the buffer
+; Use for switching map files
+LoadBufferIn proc USES edx esi edi
+	mov esi, OFFSET buffer
+	mov edi, OFFSET saveBuffer
+	mov ecx, BUFFER_SIZE
+	LoadLoop:
+		movzx edx, BYTE PTR [edi]
+		mov [esi], dl
+		add esi, TYPE buffer
+		add edi, TYPE buffer
+	Loop LoadLoop
+	ret
+LoadBufferIn endp
+
+; Draw the fruit with color on the help screen
+DrawHelpFruit proc USES eax edx
+	mov dh, 17
+	mov dl, 4
+	call GotoXY
+	mov eax, magenta + (black * 16)
+	call SetTextColor
+	movzx eax, cherryItem
+	call WriteChar
+	add dl, 2
+
+	call GotoXY
+	mov eax, red + (black * 16)
+	call SetTextColor
+	movzx eax, stwbryItem
+	call WriteChar
+	add dl, 2
+
+	call GotoXY
+	mov eax, brown + (black * 16)
+	call SetTextColor
+	movzx eax, orangeItem
+	call WriteChar
+	add dl, 2
+
+	call GotoXY
+	mov eax, green + (black * 16)
+	call SetTextColor
+	movzx eax, appleItem
+	call WriteChar
+	add dl, 2
+
+	call GotoXY
+	mov eax, yellow + (black * 16)
+	call SetTextColor
+	movzx eax, melonItem
+	call WriteChar
+	add dl, 2
+
+	call GotoXY
+	mov eax, lightBlue + (black * 16)
+	call SetTextColor
+	movzx eax, galBssItem
+	call WriteChar
+	add dl, 2
+
+	call GotoXY
+	mov eax, yellow + (black * 16)
+	call SetTextColor
+	movzx eax, bellItem
+	call WriteChar
+	add dl, 2
+
+	call GotoXY
+	mov eax, yellow + (black * 16)
+	call SetTextColor
+	movzx eax, keyItem
+	call WriteChar
+
+	mov eax, white + (black * 16)
+	call SetTextColor
+	ret
+DrawHelpFruit endp
 
 end Main
