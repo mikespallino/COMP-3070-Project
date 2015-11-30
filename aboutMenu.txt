@@ -1,0 +1,22 @@
+²²²²²²²²²²²²²²²²²²²²²²²
+²       ABOUT         ²
+²                     ²
+² Pacman, the world-  ²
+²renowned yellow bob  ²
+²with a mouth, was or-²
+²riginally created by ²
+²Namco in the early   ²
+²1980s and has been   ²
+²update for Assembly  ²
+²Language Class taught²
+²by Professor Suresh, ²
+²and created by:      ²
+²Mike Spallino	      ²
+²Andrew Hart	      ²
+²Diego Prates	      ²
+²Josh Sullivan 	      ²
+²        	      ²
+² Press P for Play    ²
+²       H for Help    ²
+²                     ²
+²²²²²²²²²²²²²²²²²²²²²²²

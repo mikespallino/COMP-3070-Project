@@ -4,7 +4,7 @@ INCLUDE irvine32.inc
 INCLUDE macros.inc
 
 MapObject Struct
-	MapFile byte 10 Dup(0)
+	MapFile byte 100 Dup(0)
 	PacDots WORD ?
 MapObject Ends
 
@@ -12,9 +12,12 @@ BUFFER_SIZE = 1000
 MAX_COORD = 23
 MAP_WIDTH = 25
 
+
+
 .data
 Main_MenuStr	BYTE "main menu.txt"
 buffer			BYTE   BUFFER_SIZE DUP(?)
+saveBuffer		BYTE   BUFFER_SIZE DUP(?)
 filenamePtr		DWORD offset Main_MenuStr
 fileHandle		HANDLE ?
 PacManX			BYTE   11
@@ -36,21 +39,22 @@ galBssItem		BYTE 229
 bellItem		BYTE 230
 keyItem			BYTE 231
 ticks			DWORD 0
-Map1			MapObject<"Map1.txt",223>
-Map2			MapObject<"Map2.txt",204>
-Map3			MapObject<"Map3.txt",232>
+Map1			MapObject<"Map1.txt",205>
+Map2			MapObject<"Map2.txt",233>
+Map3			MapObject<"Map3.txt",224>
+HelpMenu		MapObject<"HelpMenu.txt",225>
+AboutMenu		MapObject<"AboutMenu.txt",222>
 Level			BYTE ?
 PacDotsConsumed DWORD 0
 PacDotCount		DWORD 0
+TotalTickCount  DWORD 0
+MaxTickCount    DWORD 1500
 
 .code
 main proc
 	call ReadMapFile
-	call ReadChar
-	mov ecx,3
-	MapLoop:
-		push ecx
-		mov level, cl
+	call splash
+	MapLoop::
 		call GetLevel						 ; Sets the right map to be loaded
 
 		call ReadMapFile                     ; Get a map
@@ -59,15 +63,68 @@ main proc
 			call Render
 			call DelayPacMan                 ; Delays pacman
 			call Update
-			mov eax, PacDotCount
-			cmp eax, PacDotsConsumed
-			jg MainLoop
-			call ResetGame					  ; Resets game from the begining
-			pop ecx
-			Loop MapLoop
+			call CheckTickCount
+			;mov eax, PacDotCount
+			;cmp eax, PacDotsConsumed		 ;compares the amoun of pactdots consumed to the amount on the board
+			jmp MainLoop
+			NextMap::
+			call ResetGame					 ; Resets game from the begining
+			sub level, 1
+			cmp level, 0
+			je EndGame
+			jmp MapLoop
+			EndGame:
 		  mWrite <"You Won!">
+		  Call ReadChar
 		exit
 main endp
+
+DrawMap proc USES edx
+	call ClrScr
+	mov	edx, OFFSET buffer	; display the buffer
+	call WriteString
+	call Crlf
+	ret
+DrawMap endp
+
+; splash procedure
+splash proc
+	ReadCharLoop:
+		call ReadChar
+		cmp al, "p"
+		je LoadGame
+		cmp al, "h"
+		je DrawHelp
+		cmp al, "a"
+		je About
+		jmp ReadCharLoop
+	LoadGame:
+		call LoadBufferIn
+		call DrawMap
+		ret
+	DrawHelp:
+		call SaveBufferOut
+		call DrawHelpProc
+		jmp ReadCharLoop
+	About:
+		call SaveBufferOut
+		call AboutGame
+		jmp ReadCharLoop
+splash endp
+
+AboutGame proc
+	mov fileNamePtr, offset AboutMenu.MapFile
+	call ReadMapFile
+	ret
+AboutGame endp
+
+;Draw help procedure print the help screen
+DrawHelpProc proc
+	mov fileNamePtr, offset HelpMenu.MapFile
+	call ReadMapFile
+	call DrawHelpFruit
+	ret
+DrawHelpProc endp
 
 ; All procedures related to updating game state will
 ; be called from here.
@@ -98,9 +155,18 @@ GetKey proc
 	mov deltaX, 0
 	mov deltaY, 0
 	call ReadChar
+	cmp al, "h"
+	je DrawHelp
+
 	cmp al, "w"
 	je Up
 	jne NotUp
+
+	DrawHelp:
+		call SaveBufferOut
+		call DrawHelpProc
+		call Splash
+		jmp EndOfGetKeyProc
 
 	Up:
 		mov deltaX, 0
@@ -163,7 +229,7 @@ CheckMapLoc proc USES eax ebx
 
 	WrapPosBack:
 		mov PacManX, 0
-		jmp RemoveChar
+		jmp GetCoordChar
 
 	; We've moved too far forward in the Y
 	DecY:
@@ -181,7 +247,7 @@ CheckMapLoc proc USES eax ebx
 
 	WrapPosForward:
 		mov PacManX, 22
-		jmp RemoveChar
+		jmp GetCoordChar
 
 	; We've moved to far back in the Y
 	IncX:
@@ -759,4 +825,124 @@ ResetGame proc
 	ret
 ResetGame endp
 
-end main
+CheckTickCount Proc uses eax
+	mov eax, ticks
+	cmp eax, MaxTickCount
+	jle NotEnoughTicks
+	call CheckMapForDots
+	NotEnoughTicks:
+ret
+CheckTickCount endp 
+
+CheckMapForDots proc uses edx ecx eax
+
+mov edx, offset buffer
+mov ecx, sizeof buffer
+L1:
+	mov al, [edx]
+	cmp al, '.'
+	je ThereIsDot
+	add edx, 1
+	Loop L1
+	call DelayPacMan
+	jmp NextMap
+ThereIsDot:
+ret
+CheckMapForDots endp
+
+; Save out what was in the buffer to the save buffer
+; Use for switching map files
+SaveBufferOut proc USES edx esi edi
+	mov esi, OFFSET buffer
+	mov edi, OFFSET saveBuffer
+	mov ecx, BUFFER_SIZE
+	SaveLoop:
+		movzx edx, BYTE PTR [esi]
+
+		mov [edi], dl
+		add esi, TYPE buffer
+		add edi, TYPE buffer
+	Loop SaveLoop
+	ret
+SaveBufferOut endp
+
+; Load whatever was put into the saveBuffer back into the buffer
+; Use for switching map files
+LoadBufferIn proc USES edx esi edi
+	mov esi, OFFSET buffer
+	mov edi, OFFSET saveBuffer
+	mov ecx, BUFFER_SIZE
+	LoadLoop:
+		movzx edx, BYTE PTR [edi]
+		mov [esi], dl
+		add esi, TYPE buffer
+		add edi, TYPE buffer
+	Loop LoadLoop
+	ret
+LoadBufferIn endp
+
+; Draw the fruit with color on the help screen
+DrawHelpFruit proc USES eax edx
+	mov dh, 17
+	mov dl, 4
+	call GotoXY
+	mov eax, magenta + (black * 16)
+	call SetTextColor
+	movzx eax, cherryItem
+	call WriteChar
+	add dl, 2
+
+	call GotoXY
+	mov eax, red + (black * 16)
+	call SetTextColor
+	movzx eax, stwbryItem
+	call WriteChar
+	add dl, 2
+
+	call GotoXY
+	mov eax, brown + (black * 16)
+	call SetTextColor
+	movzx eax, orangeItem
+	call WriteChar
+	add dl, 2
+
+	call GotoXY
+	mov eax, green + (black * 16)
+	call SetTextColor
+	movzx eax, appleItem
+	call WriteChar
+	add dl, 2
+
+	call GotoXY
+	mov eax, yellow + (black * 16)
+	call SetTextColor
+	movzx eax, melonItem
+	call WriteChar
+	add dl, 2
+
+	call GotoXY
+	mov eax, lightBlue + (black * 16)
+	call SetTextColor
+	movzx eax, galBssItem
+	call WriteChar
+	add dl, 2
+
+	call GotoXY
+	mov eax, yellow + (black * 16)
+	call SetTextColor
+	movzx eax, bellItem
+	call WriteChar
+	add dl, 2
+
+	call GotoXY
+	mov eax, yellow + (black * 16)
+	call SetTextColor
+	movzx eax, keyItem
+	call WriteChar
+
+	mov eax, white + (black * 16)
+	call SetTextColor
+	ret
+DrawHelpFruit endp
+
+end Main
