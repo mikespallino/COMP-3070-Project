@@ -1,0 +1,22 @@
+²²²²²²²²²²²²²²²²²²²²²²²
+²        PACMAN       ²
+²   	CONTROLS      ²
+²   KEYS FOR PACMAN   ²
+²  A: RIGHT  W: UP    ²
+²  D: LEFT   S: DOWN  ²
+²  P: PLAY            ²
+²  Q: QUIT GAME       ²
+² The idea is a simple²
+²guide Pacman around  ²
+²the maze and eat all ²
+²the dots avoiding the²
+²randon Laser system. ²
+²Occasionally, a fruit²
+²appears which gives a²
+²bonus score.         ²
+²                     ²
+²                     ²
+²                     ²
+² Press P for Play    ²
+²       H for Help    ²
+²²²²²²²²²²²²²²²²²²²²²²²
