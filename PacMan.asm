@@ -11,8 +11,6 @@ MapObject Ends
 BUFFER_SIZE = 1000
 MAX_COORD = 23
 MAP_WIDTH = 25
- 
-
 
 .data
 Main_MenuStr	BYTE "main menu.txt"
@@ -52,9 +50,12 @@ PacDotCount		DWORD 0
 TotalTickCount  DWORD 0
 MaxTickCount    DWORD 1500
 laserCoord		BYTE ?
+fruitDrawn		BYTE ? ; Value 1-8
+fruitConsumed	BYTE ? ; Value 0 or 1
 
 .code
 main proc
+	call Randomize
 	call ReadMapFile
 	call splash
 	mov level, 3
@@ -332,34 +333,42 @@ CheckMapLoc proc USES eax ebx
 
 			Cherry:
 				mov pointsToAdd, 100
+				mov fruitConsumed, 1
 				jmp RemoveChar
 
 			Strawberry:
 				mov pointsToAdd, 300
+				mov fruitConsumed, 1
 				jmp RemoveChar
 
 			Orange:
 				mov pointsToAdd, 500
+				mov fruitConsumed, 1
 				jmp RemoveChar
 
 			Apple:
 				mov pointsToAdd, 700
+				mov fruitConsumed, 1
 				jmp RemoveChar
 
 			Melon:
 				mov pointsToAdd, 1000
+				mov fruitConsumed, 1
 				jmp RemoveChar
 
 			Boss:
 				mov pointsToAdd, 2000
+				mov fruitConsumed, 1
 				jmp RemoveChar
 
 			Bell:
 				mov pointsToAdd, 3000
+				mov fruitConsumed, 1
 				jmp RemoveChar
 
 			Key:
 				mov pointsToAdd, 5000
+				mov fruitConsumed, 1
 				jmp RemoveChar
 
 			InvalidChar:
@@ -580,10 +589,71 @@ FireLaser proc
 		mov edx, offset buffer
 		Call WriteString
 
-	ret
+		movzx eax, fruitConsumed
+		cmp fruitConsumed, 0
+		je RedrawFruit
+		jne EndFireLaser
+
+		RedrawFruit:
+			movzx eax, fruitDrawn
+			cmp eax, 1
+			je RedrawCherry
+			cmp eax, 2
+			je RedrawStrawberry
+			cmp eax, 3
+			je RedrawOrange
+			cmp eax, 4
+			je RedrawApple
+			cmp eax, 5
+			je RedrawMelon
+			cmp eax, 6
+			je RedrawGalaxianBoss
+			cmp eax, 7
+			je RedrawBell
+			cmp eax, 8
+			je RedrawKey
+			jmp EndFireLaser
+
+			RedrawCherry:
+				call DrawCherry
+				jmp EndFireLaser
+
+			RedrawStrawberry:
+				call DrawStrawberry
+				jmp EndFireLaser
+
+			RedrawOrange:
+				call DrawOrange
+				jmp EndFireLaser
+
+			RedrawApple:
+				call DrawApple
+				jmp EndFireLaser
+
+			RedrawMelon:
+				call DrawMelon
+				jmp EndFireLaser
+
+			RedrawGalaxianBoss:
+				call DrawGalaxianBoss
+				jmp EndFireLaser
+
+			RedrawBell:
+				call DrawBell
+				jmp EndFireLaser
+
+			RedrawKey:
+				call DrawKey
+				jmp EndFireLaser
+
+
+		EndFireLaser:
+			ret
 FireLaser endp
 
 DrawCherry proc USES eax ecx edx
+	mov fruitDrawn, 1
+	mov fruitConsumed, 0
 	mov eax, magenta + (black * 16)
 	call SetTextColor
 	mov eax, 0
@@ -608,10 +678,13 @@ DrawCherry proc USES eax ecx edx
 DrawCherry endp
 
 DrawStrawberry proc USES eax ecx edx
+	mov fruitConsumed, 0
 	movzx eax, cherryItem
 	mov cherryItem, ' '
 	call DrawCherry
 	mov cherryItem, al
+
+	mov fruitDrawn, 2
 
 	mov eax, red + (black * 16)
 	call SetTextColor
@@ -637,11 +710,13 @@ DrawStrawberry proc USES eax ecx edx
 DrawStrawberry endp
 
 DrawOrange proc USES eax ecx edx
-	
+	mov fruitConsumed, 0
 	movzx eax, stwbryItem
 	mov stwbryItem, ' '
 	call DrawStrawberry
 	mov stwbryItem, al
+
+	mov fruitDrawn, 3
 
 	mov eax, brown + (black * 16)
 	call SetTextColor
@@ -667,10 +742,13 @@ DrawOrange proc USES eax ecx edx
 DrawOrange endp
 
 DrawApple proc USES eax ecx edx
+	mov fruitConsumed, 0
 	movzx eax, orangeItem
 	mov orangeItem, ' '
 	call DrawOrange
 	mov orangeItem, al
+
+	mov fruitDrawn, 4
 
 	mov eax, green + (black * 16)
 	call SetTextColor
@@ -696,10 +774,13 @@ DrawApple proc USES eax ecx edx
 DrawApple endp
 
 DrawMelon proc USES eax ecx edx
+	mov fruitConsumed, 0
 	movzx eax, appleItem
 	mov appleItem, ' '
 	call DrawApple
 	mov appleItem, al
+
+	mov fruitDrawn, 5
 
 	mov eax, yellow + (black * 16)
 	call SetTextColor
@@ -725,10 +806,13 @@ DrawMelon proc USES eax ecx edx
 DrawMelon endp
 
 DrawGalaxianBoss proc USES eax ecx edx
+	mov fruitConsumed, 0
 	movzx eax, melonItem
 	mov melonItem, ' '
 	call DrawMelon
 	mov melonItem, al
+
+	mov fruitDrawn, 6
 
 	mov eax, lightBlue + (black * 16)
 	call SetTextColor
@@ -753,11 +837,13 @@ DrawGalaxianBoss proc USES eax ecx edx
 DrawGalaxianBoss endp
 
 DrawBell proc USES eax ecx edx
-	
+	mov fruitConsumed, 0
 	movzx eax, galBssItem
 	mov galBssItem, ' '
 	call DrawGalaxianBoss
 	mov galBssItem, al
+
+	mov fruitDrawn, 7
 
 	mov eax, yellow + (black * 16)
 	call SetTextColor
@@ -783,11 +869,13 @@ DrawBell proc USES eax ecx edx
 DrawBell endp
 
 DrawKey proc USES eax ecx edx
-	
+	mov fruitConsumed, 0
 	movzx eax, bellItem
 	mov bellItem, ' '
 	call DrawBell
 	mov bellItem, al
+
+	mov fruitDrawn, 8
 
 	mov eax, yellow + (black * 16)
 	call SetTextColor
