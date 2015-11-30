@@ -56,8 +56,8 @@ main proc
 	call ReadMapFile
 	call splash
 	mov level, 3
+	MapLoop:
 		call GetLevel						 ; Sets the right map to be loaded
-
 		call DrawPacMan
 		MainLoop:                            ; Main loop
 			call Render
