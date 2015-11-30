@@ -5,7 +5,7 @@ INCLUDE macros.inc
 
 MapObject Struct
 	MapFile byte 100 Dup(0)
-	LevelFile byte 100 Dup(0)
+	MapIntro byte 15 Dup(0)
 MapObject Ends
 
 BUFFER_SIZE = 1000
@@ -44,8 +44,8 @@ Map2			MapObject<"Map2.txt","Level2.txt">
 Map3			MapObject<"Map3.txt","Level3.txt">
 HelpMenu		MapObject<"HelpMenu.txt"," ">
 AboutMenu		MapObject<"AboutMenu.txt"," ">
-Winning			MapObject<"win.txt"," ">
-Losing			MapObject<"loss.txt", " ">
+Win             MapObject<"win.txt"," ">
+Loss            MapObject<"loss.txt"," ">
 Level			BYTE ?
 PacDotsConsumed DWORD 0
 PacDotCount		DWORD 0
@@ -58,9 +58,8 @@ main proc
 	call ReadMapFile
 	call splash
 	mov level, 3
-		MapLoop:
+	MapLoop:
 		call GetLevel						 ; Sets the right map to be loaded
-
 		call DrawPacMan
 		MainLoop:                            ; Main loop
 			call Render
@@ -75,13 +74,13 @@ main proc
 			je EndGame
 			jmp MapLoop
 			EndGame:
-			mov fileNamePtr, offset Winning.MapFile
+			mov fileNamePtr, offset win.MapFile
 			call ReadMapFile
 		  Call ReadChar
 			exit
 			EndGame2::
-			mov fileNamePtr, offset Losing.MapFile
-			call ReadMapFile
+			mov fileNamePtr, offset loss.MapFile
+			call ReadMapFile 
 			exit
 		  Call ReadChar
 main endp
@@ -422,7 +421,7 @@ DrawPacMan endp
 ; Read File from the book
 ReadMapFile proc USES edx eax ecx
 
-	mov eax, white + (black * 16)
+	mov eax, white+(black*16)
 	call SetTextColor
 
 	; Open the file for input.
@@ -801,28 +800,28 @@ GetLevel proc uses eax
 	cmp Level,2
 	je Down2
 	cmp Level,1
-	mov fileNamePtr, offset map3.LevelFile
-	call ReadMapFile                     ; Get a map
+	mov fileNamePtr, offset map3.MapIntro
+	call ReadMapFile
 	mov eax, 1000
-	call Delay
+	Call Delay
 	mov fileNamePtr, offset map3.MapFile
-	call ReadMapFile                     ; Get a map
+	Call ReadMapFile
 	jmp endprog
 	Down2:
-		mov fileNamePtr, offset map2.LevelFile
-		call ReadMapFile                     ; Get a map
+		mov fileNamePtr, offset map2.MapIntro
+		call ReadMapFile
 		mov eax, 1000
-		call Delay
+		Call Delay
 		mov fileNamePtr, offset map2.MapFile
-		call ReadMapFile                     ; Get a map
-	jmp endprog
+		Call ReadMapFile
+		jmp endprog
 	Down1:
-		mov fileNamePtr, offset map1.LevelFile
-		call ReadMapFile                     ; Get a map
+		mov fileNamePtr, offset map1.MapIntro
+		call ReadMapFile
 		mov eax, 1000
-		call Delay
+		Call Delay
 		mov fileNamePtr, offset map1.MapFile
-		call ReadMapFile                     ; Get a map
+		Call ReadMapFile
 		endprog:
 		ret
 
