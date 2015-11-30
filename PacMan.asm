@@ -76,16 +76,26 @@ main proc
 			mov dh, 25
 			call GotoXY
 			mWrite <"You Won! ">
-		  Call ReadChar
 			exit
 			EndGame2::
 			mov dl, 25
 			mov dh, 13
 			call GotoXY
 			mWrite <"You Lose! ">
+			call GetKey
 			exit
 		  Call ReadChar
 main endp
+
+ExitProc proc
+		mov dl, 13
+		mov dh, 25
+		call GotoXY
+		mwrite <"Thank you for play ">
+		call crlf
+	exit
+ret
+ExitProc endp
 
 DrawMap proc USES edx
 	call ClrScr
@@ -99,6 +109,8 @@ DrawMap endp
 splash proc
 	ReadCharLoop:
 		call ReadChar
+		cmp al, "q"
+		je EndOfTheGame
 		cmp al, "p"
 		je LoadGame
 		cmp al, "h"
@@ -106,6 +118,9 @@ splash proc
 		cmp al, "a"
 		je About
 		jmp ReadCharLoop
+	EndOfTheGame:
+		call ExitProc
+		ret
 	LoadGame:
 		call LoadBufferIn
 		call DrawMap
@@ -167,10 +182,15 @@ GetKey proc
 	cmp al, "h"
 	je DrawHelp
 
+	cmp al, "q"
+	je ExitProg
+
 	cmp al, "w"
 	je Up
 	jne NotUp
-
+	
+	ExitProg: 
+		call ExitProc
 	DrawHelp:
 		call SaveBufferOut
 		call DrawHelpProc
