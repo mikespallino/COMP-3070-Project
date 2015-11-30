@@ -437,13 +437,6 @@ DrawPacMan proc USES eax edx ecx
 	ClearCRLF:                           ; Clear a bunch of lines to print at the bottom
 		call CRLF
 	Loop ClearCRLF
-	movsx eax, PacManX                   ; Print x, y, and character you last attempted a move to (debug)
-	call WriteInt
-	movsx eax, PacManY
-	call WriteInt
-	mov eax, 0
-	mov al, tempLoc
-	call WriteChar
 	ret
 DrawPacMan endp
 
@@ -495,8 +488,8 @@ ReadMapFile proc USES edx eax ecx
 ReadMapFile endp
 
 UpdateScore proc USES eax edx
-	mov dh, 20
-	mov dl, 35
+	mov dh, 24
+	mov dl, 0
 	call GotoXY
 	mWrite "Score: "
 	mov eax, score

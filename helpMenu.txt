@@ -1,6 +1,6 @@
 ²²²²²²²²²²²²²²²²²²²²²²²
 ²        PACMAN       ²
-²   	CONTROLS      ²
+²       CONTROLS      ²
 ²   KEYS FOR PACMAN   ²
 ²  A: RIGHT  W: UP    ²
 ²  D: LEFT   S: DOWN  ²
