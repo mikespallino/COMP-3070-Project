@@ -42,8 +42,10 @@ ticks			DWORD 0
 Map1			MapObject<"Map1.txt","Level1.txt">
 Map2			MapObject<"Map2.txt","Level2.txt">
 Map3			MapObject<"Map3.txt","Level3.txt">
-HelpMenu		MapObject<"HelpMenu.txt",225>
-AboutMenu		MapObject<"AboutMenu.txt",222>
+HelpMenu		MapObject<"HelpMenu.txt"," ">
+AboutMenu		MapObject<"AboutMenu.txt"," ">
+Win             MapObject<"win.txt"," ">
+Loss            MapObject<"loss.txt"," ">
 Level			BYTE ?
 PacDotsConsumed DWORD 0
 PacDotCount		DWORD 0
@@ -72,16 +74,12 @@ main proc
 			je EndGame
 			jmp MapLoop
 			EndGame:
-			mov dl, 13
-			mov dh, 25
-			call GotoXY
-			mWrite <"You Won! ">
+			mov fileNamePtr, offset win.MapFile
+			call ReadMapFile
 			exit
 			EndGame2::
-			mov dl, 25
-			mov dh, 13
-			call GotoXY
-			mWrite <"You Lose! ">
+			mov fileNamePtr, offset loss.MapFile
+			call ReadMapFile 
 			call GetKey
 			exit
 		  Call ReadChar
@@ -442,6 +440,10 @@ DrawPacMan endp
 
 ; Read File from the book
 ReadMapFile proc USES edx eax ecx
+
+	mov eax, white+(black*16)
+	call SetTextColor
+
 	; Open the file for input.
 	mov	edx, filenamePtr
 	call	OpenInputFile
