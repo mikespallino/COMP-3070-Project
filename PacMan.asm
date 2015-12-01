@@ -52,16 +52,19 @@ MaxTickCount    DWORD 1500
 laserCoord		BYTE ?
 fruitDrawn		BYTE ? ; Value 1-8
 fruitConsumed	BYTE ? ; Value 0 or 1
+lives           BYTE 3 
 
 .code
 main proc
 	call Randomize
 	call ReadMapFile
 	call splash
+	
 	mov level, 3
 	MapLoop:
 		call GetLevel						 ; Sets the right map to be loaded
 		call DrawPacMan
+		call UpdateLives
 		MainLoop:                            ; Main loop
 			call Render
 			call DelayPacMan                 ; Delays pacman
@@ -930,7 +933,8 @@ LaserProc endp
 ; Fires the laser down the column
 ; If the player is caught in it, they lose
 FireLaser proc
-	mov dl, laserCoord 
+	;mov dl, laserCoord 
+	mov dl, 5
 	mov dh, 0
 	mov ecx, 22
 	mov eax, red + (black * 16)
@@ -941,11 +945,13 @@ FireLaser proc
 		Call WriteChar
 		add dh,1
 		cmp dl, PacManX
-		je EndGame2
+		je CheckLives
 
 		mov eax, 10
 		call delay
 		Loop L1
+
+		BackUp:
 
 		mov dh, 0
 		mov dl, 0
@@ -956,6 +962,8 @@ FireLaser proc
 
 		mov edx, offset buffer
 		Call WriteString
+
+		call UpdateLives
 
 		; Check the drawn fruit state to see if it's been consumed
 		movzx eax, fruitConsumed
@@ -1016,10 +1024,45 @@ FireLaser proc
 				call DrawKey
 				jmp EndFireLaser
 
+			CheckLives:
+				sub lives,1
+				cmp lives,0
+				je EndGame2
+				jmp BackUp
+
 
 		EndFireLaser:
 			ret
 FireLaser endp
+
+UpdateLives Proc uses ecx eax edx
+mov dh, 23
+mov dl, 0
+
+mov ecx, 3
+
+L2:
+	call gotoxy
+	mov eax,0
+	call WriteChar
+	add dl,1
+	Loop L2
+
+movzx ecx, lives
+
+mov dl, 0
+
+mov eax, yellow + (black * 16)
+call SetTextColor
+
+L1:
+	call gotoxy
+	mov eax, 1
+	call WriteChar
+	add dl,1
+	Loop L1
+ret
+UpdateLives Endp
 
 ; This alerts the player that the laser will hit a column in 4 turns
 FlashLaser proc
