@@ -74,10 +74,14 @@ main proc
 			cmp level, 0
 			je EndGame
 			jmp MapLoop
-			EndGame:
+
+			; Game Win
+			EndGame:                     
 			mov fileNamePtr, offset win.MapFile
 			call ReadMapFile
 			exit
+
+			; Game Lose
 			EndGame2::
 			mov fileNamePtr, offset loss.MapFile
 			call ReadMapFile 
@@ -86,6 +90,7 @@ main proc
 		  Call ReadChar
 main endp
 
+; Quit the game
 ExitProc proc
 		mov dl, 0
 		mov dh, 25
@@ -96,6 +101,7 @@ ExitProc proc
 ret
 ExitProc endp
 
+; Redraw the map from the buffer
 DrawMap proc USES edx
 	call ClrScr
 	mov	edx, OFFSET buffer	; display the buffer
@@ -104,8 +110,9 @@ DrawMap proc USES edx
 	ret
 DrawMap endp
 
-; splash procedure
-splash proc
+; Handle the splash screen
+; Switch between playing, help screen, and about screen
+Splash proc
 	ReadCharLoop:
 		call ReadChar
 		cmp al, "q"
@@ -130,16 +137,16 @@ splash proc
 	About:
 		call AboutGame
 		jmp ReadCharLoop
-splash endp
+Splash endp
 
+; Draw the about screen
 AboutGame proc
-	;scall SaveBufferOut
 	mov fileNamePtr, offset AboutMenu.MapFile
 	call ReadMapFile
 	ret
 AboutGame endp
 
-;Draw help procedure print the help screen
+; Draw help procedure print the help screen
 DrawHelpProc proc
 	mov fileNamePtr, offset HelpMenu.MapFile
 	call ReadMapFile
@@ -165,6 +172,8 @@ Render proc
 	ret
 Render endp
 
+; Delays the player for 150 ms so the game won't speed up
+; Adds to the tick count
 DelayPacMan proc USES eax
 	mov eax,150
 	add ticks, 5
@@ -172,7 +181,9 @@ DelayPacMan proc USES eax
 	ret
 DelayPacMan endp
 
-; Map key presses to W,A,S,D
+; Map key presses to w,a,s,d,h,q
+; Updates the direction the player is moving accordingly
+; Can show the help screen as well
 GetKey proc
 	mov deltaX, 0
 	mov deltaY, 0
@@ -330,6 +341,9 @@ CheckMapLoc proc USES eax ebx
 				mov pointsToAdd, 10
 				jmp RemoveChar
 
+				; Move the correct points to add in based on which
+				; fruit was consumed. Set the fruit consumed state 
+				; to 1.
 			Cherry:
 				mov pointsToAdd, 100
 				mov fruitConsumed, 1
@@ -486,6 +500,7 @@ ReadMapFile proc USES edx eax ecx
 		ret
 ReadMapFile endp
 
+; Update the players score on the screen
 UpdateScore proc USES eax edx
 	mov dh, 24
 	mov dl, 0
@@ -496,6 +511,8 @@ UpdateScore proc USES eax edx
 	ret
 UpdateScore endp
 
+; Draws fruit based on tick count
+; Every 180 ticks a new fruit is drawn
 HandleFruit proc USES eax
 	mov eax, ticks
 	cmp eax, 180
@@ -552,96 +569,8 @@ HandleFruit proc USES eax
 		ret
 HandleFruit endp
 
-FireLaser proc
-	mov dl, laserCoord 
-	mov dh, 0
-	mov ecx, 22
-	mov eax, red + (black * 16)
-	call SetTextColor
-	L1:
-		Call GotoXy
-		mov eax, 219
-		Call WriteChar
-		add dh,1
-		cmp dl, PacManX
-		je EndGame2
-
-		mov eax, 10
-		call delay
-		Loop L1
-
-		mov dh, 0
-		mov dl, 0
-		call gotoxy
-
-		mov eax, white + (black * 16)
-		call SetTextColor
-
-		mov edx, offset buffer
-		Call WriteString
-
-		movzx eax, fruitConsumed
-		cmp fruitConsumed, 0
-		je RedrawFruit
-		jne EndFireLaser
-
-		RedrawFruit:
-			movzx eax, fruitDrawn
-			cmp eax, 1
-			je RedrawCherry
-			cmp eax, 2
-			je RedrawStrawberry
-			cmp eax, 3
-			je RedrawOrange
-			cmp eax, 4
-			je RedrawApple
-			cmp eax, 5
-			je RedrawMelon
-			cmp eax, 6
-			je RedrawGalaxianBoss
-			cmp eax, 7
-			je RedrawBell
-			cmp eax, 8
-			je RedrawKey
-			jmp EndFireLaser
-
-			RedrawCherry:
-				call DrawCherry
-				jmp EndFireLaser
-
-			RedrawStrawberry:
-				call DrawStrawberry
-				jmp EndFireLaser
-
-			RedrawOrange:
-				call DrawOrange
-				jmp EndFireLaser
-
-			RedrawApple:
-				call DrawApple
-				jmp EndFireLaser
-
-			RedrawMelon:
-				call DrawMelon
-				jmp EndFireLaser
-
-			RedrawGalaxianBoss:
-				call DrawGalaxianBoss
-				jmp EndFireLaser
-
-			RedrawBell:
-				call DrawBell
-				jmp EndFireLaser
-
-			RedrawKey:
-				call DrawKey
-				jmp EndFireLaser
-
-
-		EndFireLaser:
-			ret
-FireLaser endp
-
+; Draws the cherry on the map and redraws a space over the previous fruit
+; Updates fruitDrawn to show hold that the cherry has been drawn
 DrawCherry proc USES eax ecx edx
 	mov fruitDrawn, 1
 	mov fruitConsumed, 0
@@ -668,6 +597,8 @@ DrawCherry proc USES eax ecx edx
 	ret
 DrawCherry endp
 
+; Draws the strawberry on the map and redraws a space over the previous fruit
+; Updates fruitDrawn to show hold that the strawberry has been drawn
 DrawStrawberry proc USES eax ecx edx
 	mov fruitConsumed, 0
 	movzx eax, cherryItem
@@ -700,6 +631,8 @@ DrawStrawberry proc USES eax ecx edx
 	ret
 DrawStrawberry endp
 
+; Draws the orange on the map and redraws a space over the previous fruit
+; Updates fruitDrawn to show hold that the orange has been drawn
 DrawOrange proc USES eax ecx edx
 	mov fruitConsumed, 0
 	movzx eax, stwbryItem
@@ -732,6 +665,8 @@ DrawOrange proc USES eax ecx edx
 	ret
 DrawOrange endp
 
+; Draws the apple on the map and redraws a space over the previous fruit
+; Updates fruitDrawn to show hold that the apple has been drawn
 DrawApple proc USES eax ecx edx
 	mov fruitConsumed, 0
 	movzx eax, orangeItem
@@ -764,6 +699,8 @@ DrawApple proc USES eax ecx edx
 	ret
 DrawApple endp
 
+; Draws the melon on the map and redraws a space over the previous fruit
+; Updates fruitDrawn to show hold that the melon has been drawn
 DrawMelon proc USES eax ecx edx
 	mov fruitConsumed, 0
 	movzx eax, appleItem
@@ -796,6 +733,8 @@ DrawMelon proc USES eax ecx edx
 	ret
 DrawMelon endp
 
+; Draws the galaxian boss on the map and redraws a space over the previous fruit
+; Updates fruitDrawn to show hold that the galaxian boss has been drawn
 DrawGalaxianBoss proc USES eax ecx edx
 	mov fruitConsumed, 0
 	movzx eax, melonItem
@@ -827,6 +766,8 @@ DrawGalaxianBoss proc USES eax ecx edx
 	ret
 DrawGalaxianBoss endp
 
+; Draws the bell on the map and redraws a space over the previous fruit
+; Updates fruitDrawn to show hold that the bell has been drawn
 DrawBell proc USES eax ecx edx
 	mov fruitConsumed, 0
 	movzx eax, galBssItem
@@ -859,6 +800,8 @@ DrawBell proc USES eax ecx edx
 	ret
 DrawBell endp
 
+; Draws the key on the map and redraws a space over the previous fruit
+; Updates fruitDrawn to show hold that the key has been drawn
 DrawKey proc USES eax ecx edx
 	mov fruitConsumed, 0
 	movzx eax, bellItem
@@ -926,47 +869,54 @@ GetLevel proc uses eax
 
 GetLevel endp
 
+; Resets major game pieces
+; Pac Man location, Pac Dots Consumed
+; Tick dount
 ResetGame proc
-		call clrscr
-		mov PacManX, 11
-		mov PacManY, 16
-		mov PacDotsConsumed, 0
-		mov ticks, 0
+	call clrscr
+	mov PacManX, 11
+	mov PacManY, 16
+	mov PacDotsConsumed, 0
+	mov ticks, 0
 	ret
 ResetGame endp
 
+; Verifies the tick count is lower than the max tick count.
 CheckTickCount Proc uses eax
 	mov eax, ticks
 	cmp eax, MaxTickCount
 	jle NotEnoughTicks
 	call CheckMapForDots
 	NotEnoughTicks:
-ret
+	ret
 CheckTickCount endp 
 
+; Verifies there are still pac dots on the map
 CheckMapForDots proc uses edx ecx eax
-
-mov edx, offset buffer
-mov ecx, sizeof buffer
-L1:
-	mov al, [edx]
-	cmp al, '.'
-	je ThereIsDot
-	add edx, 1
-	Loop L1
-	call DelayPacMan
-	jmp NextMap
-ThereIsDot:
-ret
+	mov edx, offset buffer
+	mov ecx, sizeof buffer
+	L1:
+		mov al, [edx]
+		cmp al, '.'
+		je ThereIsDot
+		add edx, 1
+		Loop L1
+		call DelayPacMan
+		jmp NextMap
+	ThereIsDot:
+	ret
 CheckMapForDots endp 
 
+; This procedure handles the logic for firing the laser
+; 80  ticks = Laser Flash
+; 100 ticks = Laser Fire
 LaserProc proc USES eax ebx edx
 	mov edx, 0
 	mov eax, ticks
 	add eax, 100
 	mov ebx, 100
 	div ebx
-	cmp edx, 0
+	cmp edx, 0                           ; Look at the remainder
 	jne SkipLaser
 	Call FireLaser
 	SkipLaser:
@@ -977,6 +927,101 @@ LaserProc proc USES eax ebx edx
 	ret
 LaserProc endp
 
+; Fires the laser down the column
+; If the player is caught in it, they lose
+FireLaser proc
+	mov dl, laserCoord 
+	mov dh, 0
+	mov ecx, 22
+	mov eax, red + (black * 16)
+	call SetTextColor
+	L1:
+		Call GotoXy
+		mov eax, 219
+		Call WriteChar
+		add dh,1
+		cmp dl, PacManX
+		je EndGame2
+
+		mov eax, 10
+		call delay
+		Loop L1
+
+		mov dh, 0
+		mov dl, 0
+		call gotoxy
+
+		mov eax, white + (black * 16)
+		call SetTextColor
+
+		mov edx, offset buffer
+		Call WriteString
+
+		; Check the drawn fruit state to see if it's been consumed
+		movzx eax, fruitConsumed
+		cmp fruitConsumed, 0
+		je RedrawFruit
+		jne EndFireLaser
+
+		; Redraw the correct fruit in color
+		RedrawFruit:
+			movzx eax, fruitDrawn
+			cmp eax, 1
+			je RedrawCherry
+			cmp eax, 2
+			je RedrawStrawberry
+			cmp eax, 3
+			je RedrawOrange
+			cmp eax, 4
+			je RedrawApple
+			cmp eax, 5
+			je RedrawMelon
+			cmp eax, 6
+			je RedrawGalaxianBoss
+			cmp eax, 7
+			je RedrawBell
+			cmp eax, 8
+			je RedrawKey
+			jmp EndFireLaser
+
+			RedrawCherry:
+				call DrawCherry
+				jmp EndFireLaser
+
+			RedrawStrawberry:
+				call DrawStrawberry
+				jmp EndFireLaser
+
+			RedrawOrange:
+				call DrawOrange
+				jmp EndFireLaser
+
+			RedrawApple:
+				call DrawApple
+				jmp EndFireLaser
+
+			RedrawMelon:
+				call DrawMelon
+				jmp EndFireLaser
+
+			RedrawGalaxianBoss:
+				call DrawGalaxianBoss
+				jmp EndFireLaser
+
+			RedrawBell:
+				call DrawBell
+				jmp EndFireLaser
+
+			RedrawKey:
+				call DrawKey
+				jmp EndFireLaser
+
+
+		EndFireLaser:
+			ret
+FireLaser endp
+
+; This alerts the player that the laser will hit a column in 4 turns
 FlashLaser proc
 	mov eax, red + (black * 16)
 	call SetTextColor
