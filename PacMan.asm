@@ -933,8 +933,7 @@ LaserProc endp
 ; Fires the laser down the column
 ; If the player is caught in it, they lose
 FireLaser proc
-	;mov dl, laserCoord 
-	mov dl, 5
+	mov dl, laserCoord 
 	mov dh, 0
 	mov ecx, 22
 	mov eax, red + (black * 16)
